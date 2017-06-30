@@ -36,6 +36,36 @@ type VerifyFields struct {
 
 var now = time.Now().Round(time.Second).UTC()
 
+func TestGenCsr(t *testing.T) {
+	// Options to generate a CSR.
+	csrOptions := CertOptions{
+		Host:         "test_ca.com",
+		Org:          "MyOrg",
+		RSAKeySize:   512,
+	}
+
+	csrPem, _ := GenCsr(csrOptions)
+
+	pemBlock, _ := pem.Decode(csrPem)
+	if pemBlock == nil {
+		t.Errorf("failed to decode csr")
+	}
+	csr, err := x509.ParseCertificateRequest(pemBlock.Bytes)
+	if err != nil {
+		t.Errorf("failed to parse csr")
+	}
+	if err = csr.CheckSignature(); err != nil {
+		t.Errorf("csr signature is invalid")
+	}
+	if csr.Subject.Organization[0] != "MyOrg" {
+		t.Errorf("csr subject does not match")
+	}
+        if !strings.HasSuffix(string(csr.Extensions[0].Value[:]), "test_ca.com") {
+		t.Errorf("csr host does not match")
+	}
+}
+
+
 func TestGenCert(t *testing.T) {
 	caCertNotBefore := now
 	caCertNotAfter := now.Add(24 * time.Hour)
