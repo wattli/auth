@@ -55,7 +55,7 @@ func saveCreds(csrPem []byte, privPem []byte) {
 func main() {
 	flag.Parse()
 
-	csrPem, privPem := certmanager.GenCsr(certmanager.CertOptions{
+	csrPem, privPem := certmanager.GenCSR(certmanager.CertOptions{
 		Host:         *host,
 		Org:          *org,
 		RSAKeySize:   *keySize,
