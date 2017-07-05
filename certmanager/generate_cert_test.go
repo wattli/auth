@@ -36,7 +36,7 @@ type VerifyFields struct {
 
 var now = time.Now().Round(time.Second).UTC()
 
-func TestGenCsr(t *testing.T) {
+func TestGenCSR(t *testing.T) {
 	// Options to generate a CSR.
 	csrOptions := CertOptions{
 		Host:         "test_ca.com",
@@ -44,7 +44,11 @@ func TestGenCsr(t *testing.T) {
 		RSAKeySize:   512,
 	}
 
-	csrPem, _ := GenCsr(csrOptions)
+	csrPem, _, err := GenCSR(csrOptions)
+
+	if err != nil {
+		t.Errorf("failed to gen CSR")
+	}
 
 	pemBlock, _ := pem.Decode(csrPem)
 	if pemBlock == nil {
@@ -65,6 +69,20 @@ func TestGenCsr(t *testing.T) {
 	}
 }
 
+func TestGenCSRWithInvalidOption(t *testing.T) {
+	// Options with invalid Key size.
+	csrOptions := CertOptions{
+		Host:         "test_ca.com",
+		Org:          "MyOrg",
+		RSAKeySize:   -1,
+	}
+
+	csr, priv, err := GenCSR(csrOptions)
+
+	if err == nil || csr != nil || priv != nil {
+		t.Errorf("Should have failed")
+	}
+}
 
 func TestGenCert(t *testing.T) {
 	caCertNotBefore := now
