@@ -27,11 +27,11 @@ import (
 )
 
 var (
-	host           = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for.")
-	org            = flag.String("organization", "Juju org", "Organization for the cert.")
-	outCsr        = flag.String("out-csr", "csr.pem", "Output csr file.")
-	outPriv        = flag.String("out-priv", "priv.pem", "Output private key file.")
-	keySize        = flag.Int("key-size", 1024, "Size of the generated private key")
+	host    = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for.")
+	org     = flag.String("organization", "Juju org", "Organization for the cert.")
+	outCsr  = flag.String("out-csr", "csr.pem", "Output csr file.")
+	outPriv = flag.String("out-priv", "priv.pem", "Output private key file.")
+	keySize = flag.Int("key-size", 1024, "Size of the generated private key")
 )
 
 func saveCreds(csrPem []byte, privPem []byte) {
@@ -50,9 +50,9 @@ func main() {
 	flag.Parse()
 
 	csrPem, privPem, err := certmanager.GenCSR(certmanager.CertOptions{
-		Host:         *host,
-		Org:          *org,
-		RSAKeySize:   *keySize,
+		Host:       *host,
+		Org:        *org,
+		RSAKeySize: *keySize,
 	})
 
 	if err != nil {

@@ -39,9 +39,9 @@ var now = time.Now().Round(time.Second).UTC()
 func TestGenCSR(t *testing.T) {
 	// Options to generate a CSR.
 	csrOptions := CertOptions{
-		Host:         "test_ca.com",
-		Org:          "MyOrg",
-		RSAKeySize:   512,
+		Host:       "test_ca.com",
+		Org:        "MyOrg",
+		RSAKeySize: 512,
 	}
 
 	csrPem, _, err := GenCSR(csrOptions)
@@ -64,7 +64,7 @@ func TestGenCSR(t *testing.T) {
 	if csr.Subject.Organization[0] != "MyOrg" {
 		t.Errorf("csr subject does not match")
 	}
-        if !strings.HasSuffix(string(csr.Extensions[0].Value[:]), "test_ca.com") {
+	if !strings.HasSuffix(string(csr.Extensions[0].Value[:]), "test_ca.com") {
 		t.Errorf("csr host does not match")
 	}
 }
@@ -72,9 +72,9 @@ func TestGenCSR(t *testing.T) {
 func TestGenCSRWithInvalidOption(t *testing.T) {
 	// Options with invalid Key size.
 	csrOptions := CertOptions{
-		Host:         "test_ca.com",
-		Org:          "MyOrg",
-		RSAKeySize:   -1,
+		Host:       "test_ca.com",
+		Org:        "MyOrg",
+		RSAKeySize: -1,
 	}
 
 	csr, priv, err := GenCSR(csrOptions)
