@@ -167,7 +167,7 @@ func genSerialNum() *big.Int {
 	return serialNum
 }
 
-// genCSRTemplate generates a certificateRequest template with the given options.
+// GenCSRTemplate generates a certificateRequest template with the given options.
 func GenCSRTemplate(options CertOptions) x509.CertificateRequest {
 	template := x509.CertificateRequest{
 		Subject: pkix.Name{

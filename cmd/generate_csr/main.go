@@ -27,13 +27,8 @@ import (
 	"istio.io/auth/certmanager"
 )
 
-// Layout for parsing time
-const timeLayout = "Jan 2 15:04:05 2006"
-
 var (
 	host           = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for.")
-	validFrom      = flag.String("start-date", "", "Creation date in format of "+timeLayout)
-	validFor       = flag.Duration("duration", 365*24*time.Hour, "Duration that certificate is valid for.")
 	org            = flag.String("organization", "Juju org", "Organization for the cert.")
 	outCsr        = flag.String("out-csr", "csr.pem", "Output csr file.")
 	outPriv        = flag.String("out-priv", "priv.pem", "Output private key file.")
@@ -55,11 +50,15 @@ func saveCreds(csrPem []byte, privPem []byte) {
 func main() {
 	flag.Parse()
 
-	csrPem, privPem, _ := certmanager.GenCSR(certmanager.CertOptions{
+	csrPem, privPem, err := certmanager.GenCSR(certmanager.CertOptions{
 		Host:         *host,
 		Org:          *org,
 		RSAKeySize:   *keySize,
 	})
+
+	if err != nil {
+		glog.Fatalf("Failed to generate CSR: %s.", err)
+	}
 
 	saveCreds(csrPem, privPem)
 	fmt.Printf("Certificate and private files successfully saved in %s and %s\n", *outCsr, *outPriv)
