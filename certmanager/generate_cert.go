@@ -84,25 +84,28 @@ const (
 var oidSubjectAltName = asn1.ObjectIdentifier{2, 5, 29, 17}
 
 // GenCSR generates a X.509 certificate sign request and private key with the given options.
-func GenCSR(options CertOptions) ([]byte, []byte) {
+func GenCSR(options CertOptions) ([]byte, []byte, error) {
 	// Generates a CSR
 	priv, err := rsa.GenerateKey(rand.Reader, options.RSAKeySize)
 	if err != nil {
-		glog.Fatalf("RSA key generation failed with error %s.", err)
+		glog.Errorf("RSA key generation failed with error %s.", err)
+		return nil, nil, err
 	}
 	template := GenCSRTemplate(options)
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &template, crypto.PrivateKey(priv))
 	if err != nil {
-		glog.Fatalf("Could not create certificate request (err = %s).", err)
+		glog.Errorf("Could not create certificate request (err = %s).", err)
+		return nil, nil, err
 	}
 
-	return encodePem(true, csrBytes, privDer)
+	csr, privKey := encodePem(true, csrBytes, priv)
+	return csr, privKey, nil
 }
 
-// GenCert generates a X.509 certificate and private key with the given options.
+// GenCert generates a X.509 certificate and a private key with the given options.
 func GenCert(options CertOptions) ([]byte, []byte) {
 	// Generates a RSA private&public key pair.
-	// The public key will be bound to the certficate generated below. The
+	// The public key will be bound to the certificate generated below. The
 	// private key will be used to sign this certificate in the self-signed
 	// case, otherwise the certificate is signed by the signer private key
 	// as specified in the CertOptions.
@@ -120,10 +123,10 @@ func GenCert(options CertOptions) ([]byte, []byte) {
 		glog.Fatalf("Could not create certificate (err = %s).", err)
 	}
 
-	return encodePem(false, certBytes, privDer)
+	return encodePem(false, certBytes, priv)
 }
 
-func encodePem(isCSR bool, csrOrCert []byte, priv *PrivateKey) ([]byte, []byte) {
+func encodePem(isCSR bool, csrOrCert []byte, priv *rsa.PrivateKey) ([]byte, []byte) {
 	encodeMsg := "CERTIFICATE"
 	if isCSR {
 		encodeMsg = "CERTIFICATE REQUEST"
