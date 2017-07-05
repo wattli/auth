@@ -20,7 +20,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"time"
 
 	"github.com/golang/glog"
 
