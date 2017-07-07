@@ -23,15 +23,29 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
+type TokenFetcher interface {
+	FetchToken() ([]byte, error)
+}
+
+type GcpTokenFetcher struct {
+	// aud is the unique URI agreed upon by both the instance and the system verifying the instance's identity.
+	// For more info: https://cloud.google.com/compute/docs/instances/verifying-instance-identity
+	aud string
+}
+
+func (fetcher GcpTokenFetcher) setAudience(audience string) {
+	fetcher.aud = audience
+}
+
+func (fetcher GcpTokenFetcher) getTokenUri() string {
 	// The GCE metadata service URI to get identity token.
-	identityUri = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity"
-)
+	return "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience=" + fetcher.aud
+}
 
 // Get the GCE VM identity jwt token from its metadata server.
 // Note: this function only works in a GCE VM environment.
-func GetIdentityToken(aud string) ([]byte, error) {
-	req, err := http.NewRequest("GET", identityUri+aud, nil)
+func (fetcher GcpTokenFetcher) FetchToken() ([]byte, error) {
+	req, err := http.NewRequest("GET", fetcher.getTokenUri(), nil)
 	if err != nil {
 		glog.Errorf("Fail to construct the http request: %s", err)
 		return nil, err
