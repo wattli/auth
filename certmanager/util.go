@@ -20,50 +20,39 @@ import (
 	"encoding/pem"
 	"net/http"
 
+	// Install this package by $ go get -u cloud.google.com/go/...
+	"cloud.google.com/go/compute/metadata"
 	"github.com/golang/glog"
 )
 
 type TokenFetcher interface {
-	FetchToken() ([]byte, error)
+	FetchToken() (string, error)
 }
 
 type GcpTokenFetcher struct {
 	// aud is the unique URI agreed upon by both the instance and the system verifying the instance's identity.
 	// For more info: https://cloud.google.com/compute/docs/instances/verifying-instance-identity
-	aud string
+	aud            string
+	serviceAccount string
 }
 
 func (fetcher GcpTokenFetcher) setAudience(audience string) {
 	fetcher.aud = audience
 }
 
+func (fetcher GcpTokenFetcher) setServiceAccount(sa string) {
+	fetcher.serviceAccount = sa
+}
+
 func (fetcher GcpTokenFetcher) getTokenUri() string {
 	// The GCE metadata service URI to get identity token.
-	return "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience=" + fetcher.aud
+	return "instance/" + fetcher.serviceAccount + "/default/identity?audience=" + fetcher.aud
 }
 
 // Get the GCE VM identity jwt token from its metadata server.
 // Note: this function only works in a GCE VM environment.
-func (fetcher GcpTokenFetcher) FetchToken() ([]byte, error) {
-	req, err := http.NewRequest("GET", fetcher.getTokenUri(), nil)
-	if err != nil {
-		glog.Errorf("Fail to construct the http request: %s", err)
-		return nil, err
-	}
-	req.Header.Set("Metadata-Flavor", "Google")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		glog.Errorf("Http call failed: %s", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		glog.Errorf("Failed to parse response: %s", err)
-		return nil, err
-	}
-	return body, err
+func (fetcher GcpTokenFetcher) FetchToken() (string, error) {
+	return metadata.Get(fetcher.getTokenUri())
 }
 
 // ParsePemEncodedCertificate constructs a `x509.Certificate` object using the
