@@ -31,7 +31,7 @@ const (
 // Get the GCE VM identity jwt token from its metadata server.
 // Note: this function only works in a GCE VM environment.
 func GetIdentityToken(aud string) ([]byte, error) {
-	req, err := http.NewRequest("GET", identityUri + aud, nil)
+	req, err := http.NewRequest("GET", identityUri+aud, nil)
 	if err != nil {
 		glog.Errorf("Fail to construct the http request: %s", err)
 		return nil, err
