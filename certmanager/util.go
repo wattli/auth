@@ -18,9 +18,39 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
+	"net/http"
 
 	"github.com/golang/glog"
 )
+
+const (
+	// The GCE metadata service URI to get identity token.
+	identityUri = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity"
+)
+
+// Get the GCE VM identity jwt token from its metadata server.
+// Note: this function only works in a GCE VM environment.
+func GetIdentityToken(aud string) ([]byte, error) {
+	req, err := http.NewRequest("GET", identityUri + aud, nil)
+	if err != nil {
+		glog.Errorf("Fail to construct the http request: %s", err)
+		return nil, err
+	}
+	req.Header.Set("Metadata-Flavor", "Google")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		glog.Errorf("Http call failed: %s", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		glog.Errorf("Failed to parse response: %s", err)
+		return nil, err
+	}
+	return body, err
+}
 
 // ParsePemEncodedCertificate constructs a `x509.Certificate` object using the
 // given a PEM-encoded certificate,
