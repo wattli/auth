@@ -44,7 +44,7 @@ func (fetcher *GcpTokenFetcher) setServiceAccount(sa string) {
 
 func (fetcher *GcpTokenFetcher) getTokenUri() string {
 	// The GCE metadata service URI to get identity token.
-	return "instance/service-accounts" + fetcher.serviceAccount + "/identity?audience=" + fetcher.aud
+	return "instance/service-accounts/" + fetcher.serviceAccount + "/identity?audience=" + fetcher.aud
 }
 
 // Get the GCE VM identity jwt token from its metadata server.
