@@ -18,9 +18,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
-	"net/http"
 
-	// Install this package by $ go get -u cloud.google.com/go/...
 	"cloud.google.com/go/compute/metadata"
 	"github.com/golang/glog"
 )
@@ -36,22 +34,22 @@ type GcpTokenFetcher struct {
 	serviceAccount string
 }
 
-func (fetcher GcpTokenFetcher) setAudience(audience string) {
+func (fetcher *GcpTokenFetcher) setAudience(audience string) {
 	fetcher.aud = audience
 }
 
-func (fetcher GcpTokenFetcher) setServiceAccount(sa string) {
+func (fetcher *GcpTokenFetcher) setServiceAccount(sa string) {
 	fetcher.serviceAccount = sa
 }
 
-func (fetcher GcpTokenFetcher) getTokenUri() string {
+func (fetcher *GcpTokenFetcher) getTokenUri() string {
 	// The GCE metadata service URI to get identity token.
-	return "instance/" + fetcher.serviceAccount + "/default/identity?audience=" + fetcher.aud
+	return "instance/service-accounts" + fetcher.serviceAccount + "/identity?audience=" + fetcher.aud
 }
 
 // Get the GCE VM identity jwt token from its metadata server.
 // Note: this function only works in a GCE VM environment.
-func (fetcher GcpTokenFetcher) FetchToken() (string, error) {
+func (fetcher *GcpTokenFetcher) FetchToken() (string, error) {
 	return metadata.Get(fetcher.getTokenUri())
 }
 
