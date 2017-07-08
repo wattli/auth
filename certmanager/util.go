@@ -23,10 +23,12 @@ import (
 	"github.com/golang/glog"
 )
 
+// TokenFetcher defines the interface to fetch token.
 type TokenFetcher interface {
 	FetchToken() (string, error)
 }
 
+// GcpTokenFetcher implements the token fetcher in GCP.
 type GcpTokenFetcher struct {
 	// aud is the unique URI agreed upon by both the instance and the system verifying the instance's identity.
 	// For more info: https://cloud.google.com/compute/docs/instances/verifying-instance-identity
@@ -34,23 +36,15 @@ type GcpTokenFetcher struct {
 	serviceAccount string
 }
 
-func (fetcher *GcpTokenFetcher) setAudience(audience string) {
-	fetcher.aud = audience
-}
-
-func (fetcher *GcpTokenFetcher) setServiceAccount(sa string) {
-	fetcher.serviceAccount = sa
-}
-
-func (fetcher *GcpTokenFetcher) getTokenUri() string {
+func (fetcher *GcpTokenFetcher) getTokenURI() string {
 	// The GCE metadata service URI to get identity token.
 	return "instance/service-accounts/" + fetcher.serviceAccount + "/identity?audience=" + fetcher.aud
 }
 
-// Get the GCE VM identity jwt token from its metadata server.
+// FetchToken fetchs the GCE VM identity jwt token from its metadata server.
 // Note: this function only works in a GCE VM environment.
 func (fetcher *GcpTokenFetcher) FetchToken() (string, error) {
-	return metadata.Get(fetcher.getTokenUri())
+	return metadata.Get(fetcher.getTokenURI())
 }
 
 // ParsePemEncodedCertificate constructs a `x509.Certificate` object using the
