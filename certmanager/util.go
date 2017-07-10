@@ -40,7 +40,7 @@ func (fetcher *GcpTokenFetcher) getTokenURI() string {
 	return "instance/service-accounts/default/identity?audience=" + fetcher.aud
 }
 
-func (fetcher *GcpTokenFetcher) getServiceAccount() string {
+func (fetcher *GcpTokenFetcher) getServiceAccount() (string, error) {
 	// Get the service account from the GCE metadata server.
 	return metadata.Get("instance/service-accounts/default/email")
 }
