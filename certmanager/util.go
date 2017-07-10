@@ -92,5 +92,3 @@ func parsePemEncodedKey(algo x509.PublicKeyAlgorithm, keyBytes []byte) crypto.Pr
 
 	return nil
 }
-
-func ParseJwtToken()
