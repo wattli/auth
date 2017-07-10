@@ -33,12 +33,16 @@ type GcpTokenFetcher struct {
 	// aud is the unique URI agreed upon by both the instance and the system verifying the instance's identity.
 	// For more info: https://cloud.google.com/compute/docs/instances/verifying-instance-identity
 	aud            string
-	serviceAccount string
 }
 
 func (fetcher *GcpTokenFetcher) getTokenURI() string {
 	// The GCE metadata service URI to get identity token.
-	return "instance/service-accounts/" + fetcher.serviceAccount + "/identity?audience=" + fetcher.aud
+	return "instance/service-accounts/default/identity?audience=" + fetcher.aud
+}
+
+func (fetcher *GcpTokenFetcher) getServiceAccount() string {
+	// Get the service account from the GCE metadata server.
+	return metadata.Get("instance/service-accounts/default/email")
 }
 
 // FetchToken fetchs the GCE VM identity jwt token from its metadata server.
@@ -88,3 +92,5 @@ func parsePemEncodedKey(algo x509.PublicKeyAlgorithm, keyBytes []byte) crypto.Pr
 
 	return nil
 }
+
+func ParseJwtToken()
