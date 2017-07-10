@@ -32,7 +32,7 @@ type TokenFetcher interface {
 type GcpTokenFetcher struct {
 	// aud is the unique URI agreed upon by both the instance and the system verifying the instance's identity.
 	// For more info: https://cloud.google.com/compute/docs/instances/verifying-instance-identity
-	aud            string
+	aud string
 }
 
 func (fetcher *GcpTokenFetcher) getTokenURI() string {
