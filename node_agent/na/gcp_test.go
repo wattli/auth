@@ -15,23 +15,36 @@
 package na
 
 import (
+	"reflect"
+	"testing"
+
 	"google.golang.org/grpc"
-	cred "istio.io/auth/pkg/credential"
-	"istio.io/auth/utils"
 )
 
-type onPremPlatformImpl struct {
+const (
+	token = "abcdef"
+)
+
+// mockTokenFetcher implements the mock token fetcher.
+type mockTokenFetcher struct {
 }
 
-func (na *onPremPlatformImpl) GetDialOptions(cfg *Config, fetcher cred.TokenFetcher) ([]grpc.DialOption, error) {
-	transportCreds := utils.GetTLSCredentials(*cfg.NodeIdentityCertFile,
-		*cfg.NodeIdentityPrivateKeyFile,
-		*cfg.RootCACertFile, true /* isClient */)
-	var options []grpc.DialOption
-	options = append(options, grpc.WithTransportCredentials(transportCreds))
-	return options, nil
+// A mock fetcher for FetchToken.
+func (fetcher *mockTokenFetcher) FetchToken() (string, error) {
+	return token, nil
 }
 
-func (na *onPremPlatformImpl) ProperPlatform() bool {
-	return true
+func TestGetDialOptions(t *testing.T) {
+	gcp := gcpPlatformImpl{}
+
+	options, _ := gcp.GetDialOptions(nil, &mockTokenFetcher{})
+
+	if len(options) != 1 {
+		t.Errorf("Wrong dial options size")
+	}
+
+	expectedOption := grpc.WithPerRPCCredentials(jwtAccess{token})
+	if reflect.ValueOf(options[0]).Pointer() != reflect.ValueOf(expectedOption).Pointer() {
+		t.Errorf("Wrong option found")
+	}
 }
