@@ -21,7 +21,6 @@ import (
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	cred "istio.io/auth/pkg/credential"
 	"istio.io/auth/pkg/pki/ca"
 	pb "istio.io/auth/proto"
 )
@@ -68,10 +67,10 @@ type Config struct {
 
 // This interface is provided for implementing platform specific code.
 type platformSpecificRequest interface {
-	GetDialOptions(*Config, cred.TokenFetcher) ([]grpc.DialOption, error)
+	GetDialOptions(*Config) ([]grpc.DialOption, error)
 	// Whether the node agent is running on the right platform, e.g., if gcpPlatformImpl should only
 	// run on GCE.
-	ProperPlatform() bool
+	IsProperPlatform() bool
 }
 
 // The real node agent implementation. This implements the "Start" function
@@ -89,7 +88,7 @@ func (na nodeAgentInternal) Start() {
 		glog.Fatalf("Node Agent configuration is nil")
 	}
 
-	if !na.pr.ProperPlatform() {
+	if !na.pr.IsProperPlatform() {
 		glog.Fatalf("Node Agent is not running on the right platform")
 	}
 
@@ -122,11 +121,7 @@ func (na *nodeAgentInternal) getCertificateSignRequest() ([]byte, *pb.Certificat
 }
 
 func (na *nodeAgentInternal) sendCSR() ([]byte, *pb.CertificateSignResponse, error) {
-	fetcher := &cred.GcpTokenFetcher{}
-	if *na.config.Env != GCP {
-		fetcher = nil
-	}
-	dialOptions, err := na.pr.GetDialOptions(na.config, fetcher)
+	dialOptions, err := na.pr.GetDialOptions(na.config)
 	if err != nil {
 		glog.Errorf("Cannot construct the dial options with error %s", err)
 		return nil, nil, err

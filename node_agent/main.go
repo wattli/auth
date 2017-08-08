@@ -45,13 +45,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	var nodeAgent na.NodeAgent
-	switch *naConfig.Env {
-	case na.ONPREM, na.GCP:
-		nodeAgent = na.NewNodeAgent(&naConfig)
-	default:
-		glog.Fatalf("Unknown Environment %s", *env)
-	}
+	nodeAgent := na.NewNodeAgent(&naConfig)
 	glog.Infof("Starting Node Agent")
 	nodeAgent.Start()
 }

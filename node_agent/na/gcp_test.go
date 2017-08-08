@@ -35,9 +35,9 @@ func (fetcher *mockTokenFetcher) FetchToken() (string, error) {
 }
 
 func TestGetDialOptions(t *testing.T) {
-	gcp := gcpPlatformImpl{}
+	gcp := gcpPlatformImpl{&mockTokenFetcher{}}
 
-	options, _ := gcp.GetDialOptions(nil, &mockTokenFetcher{})
+	options, _ := gcp.GetDialOptions(nil)
 
 	if len(options) != 1 {
 		t.Errorf("Wrong dial options size")

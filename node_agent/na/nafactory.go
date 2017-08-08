@@ -16,6 +16,7 @@ package na
 
 import (
 	"github.com/golang/glog"
+	cred "istio.io/auth/pkg/credential"
 )
 
 // NodeAgent interface that should be implemented by
@@ -37,7 +38,7 @@ func NewNodeAgent(cfg *Config) NodeAgent {
 	case ONPREM:
 		na.pr = &onPremPlatformImpl{}
 	case GCP:
-		na.pr = &gcpPlatformImpl{}
+		na.pr = &gcpPlatformImpl{&cred.GcpTokenFetcher{}}
 	default:
 		glog.Fatalf("Invalid env %d specified", *cfg.Env)
 	}

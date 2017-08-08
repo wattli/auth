@@ -37,14 +37,15 @@ func (j jwtAccess) RequireTransportSecurity() bool {
 }
 
 type gcpPlatformImpl struct {
+	fetcher cred.TokenFetcher
 }
 
-func (na *gcpPlatformImpl) ProperPlatform() bool {
+func (na *gcpPlatformImpl) IsProperPlatform() bool {
 	return metadata.OnGCE()
 }
 
-func (na *gcpPlatformImpl) GetDialOptions(cfg *Config, fetcher cred.TokenFetcher) ([]grpc.DialOption, error) {
-	jwtKey, err := fetcher.FetchToken()
+func (na *gcpPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error) {
+	jwtKey, err := na.fetcher.FetchToken()
 	if err != nil {
 		glog.Errorf("Failed to get instance from GCE metadata %s, please make sure this binary is running on a GCE VM", err)
 		return nil, err

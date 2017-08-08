@@ -16,14 +16,13 @@ package na
 
 import (
 	"google.golang.org/grpc"
-	cred "istio.io/auth/pkg/credential"
 	"istio.io/auth/utils"
 )
 
 type onPremPlatformImpl struct {
 }
 
-func (na *onPremPlatformImpl) GetDialOptions(cfg *Config, fetcher cred.TokenFetcher) ([]grpc.DialOption, error) {
+func (na *onPremPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error) {
 	transportCreds := utils.GetTLSCredentials(*cfg.NodeIdentityCertFile,
 		*cfg.NodeIdentityPrivateKeyFile,
 		*cfg.RootCACertFile, true /* isClient */)
@@ -32,6 +31,6 @@ func (na *onPremPlatformImpl) GetDialOptions(cfg *Config, fetcher cred.TokenFetc
 	return options, nil
 }
 
-func (na *onPremPlatformImpl) ProperPlatform() bool {
+func (na *onPremPlatformImpl) IsProperPlatform() bool {
 	return true
 }
