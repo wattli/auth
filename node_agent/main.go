@@ -23,7 +23,6 @@ import (
 
 var (
 	naConfig na.Config
-	env      *string
 )
 
 func init() {
