@@ -202,12 +202,6 @@ func verifyCommandLineOptions() {
 		return
 	}
 
-	if opts.certChainFile == "" {
-		glog.Fatalf(
-			"No certificate chain has been specified. Either specify a cert chain file via '-cert-chain' option " +
-				"or use '-self-signed-ca'")
-	}
-
 	if opts.signingCertFile == "" {
 		glog.Fatalf(
 			"No signing cert has been specified. Either specify a cert file via '-signing-cert' option " +
