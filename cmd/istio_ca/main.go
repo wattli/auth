@@ -160,7 +160,7 @@ func createCA() ca.CertificateAuthority {
 
 	certChainBytes := []byte{0}
 	if opts.certChainFile != "" {
-	  certChainBytes = readFile(opts.certChainFile)
+	        certChainBytes = readFile(opts.certChainFile)
 	}
 	caOpts := &ca.IstioCAOptions{
 		CertChainBytes:   certChainBytes,
