@@ -158,7 +158,7 @@ func createCA() ca.CertificateAuthority {
 		return ca
 	}
 
-	certChainBytes := []byte{0}
+	var certChainBytes []byte
 	if opts.certChainFile != "" {
 	        certChainBytes = readFile(opts.certChainFile)
 	}
