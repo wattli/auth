@@ -107,7 +107,7 @@ func (na *nodeAgentInternal) Start() error {
 		return fmt.Errorf("node Agent is not running on the right platform")
 	}
 
-	glog.Infof("------------ Node Agent starts successfully.")
+	glog.Infof("Node Agent starts successfully.")
 
 	retries := 0
 	retrialInterval := na.config.CSRInitialRetrialInterval
