@@ -34,6 +34,5 @@ pkg_deb(
     homepage = "http://istio.io",
     maintainer = "The Istio Authors <istio-dev@googlegroups.com>",
     package = "istio-node-agent",
-    postinst = "postinst.sh",
     version = "0.2.1",
 )
