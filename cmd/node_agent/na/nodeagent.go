@@ -107,7 +107,7 @@ func (na *nodeAgentInternal) Start() error {
 		return fmt.Errorf("node Agent is not running on the right platform")
 	}
 
-	glog.Infof("Node Agent starts successfully.")
+	glog.Infof("------------ Node Agent starts successfully.")
 
 	retries := 0
 	retrialInterval := na.config.CSRInitialRetrialInterval
@@ -204,10 +204,10 @@ func (na *nodeAgentInternal) getWaitTimeFromCert(
 
 func (na *nodeAgentInternal) writeToFile(privKey []byte, cert []byte) error {
 	glog.Infof("Write key and cert to local file.")
-	if err := ioutil.WriteFile("serviceIdentityKey.pem", privKey, 0600); err != nil {
+	if err := ioutil.WriteFile("/etc/certs/key.pem", privKey, 0600); err != nil {
 		return fmt.Errorf("cannot write service identity private key file")
 	}
-	if err := ioutil.WriteFile("serviceIdentityCert.pem", cert, 0644); err != nil {
+	if err := ioutil.WriteFile("/etc/certs/cert-chain.pem", cert, 0644); err != nil {
 		return fmt.Errorf("cannot write service identity certificate file")
 	}
 	return nil
