@@ -39,7 +39,7 @@ func init() {
 
 	flags := rootCmd.Flags()
 
-	flags.StringVar(&naConfig.ServiceIdentity, "service-identity", "default", "Service Identity the node agent is managing")
+	flags.StringVar(&naConfig.ServiceIdentity, "service-identity", "", "Service Identity the node agent is managing")
 	flags.StringVar(&naConfig.ServiceIdentityOrg, "org", "", "Organization for the cert")
 	flags.IntVar(&naConfig.RSAKeySize, "key-size", 1024, "Size of generated private key")
 	flags.StringVar(&naConfig.NodeIdentityCertFile, "na-cert", "/etc/certs/na-cert.pem", "Node Agent identity cert file")
