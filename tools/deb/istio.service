@@ -3,7 +3,7 @@ Description=istio-node-agent: The Istio node agent
 Documentation=http://istio.io/
 
 [Service]
-ExecStart=/usr/local/bin/istio-node-agent --ca-address=istio-ca:8060 --env=0 --alsologtostder --service-identity=spiffe://cluster.local/ns/default/sa/default
+ExecStart=/usr/local/bin/istio-node-agent --env=0 --alsologtostder
 Restart=always
 StartLimitInterval=0
 RestartSec=10
