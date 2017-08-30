@@ -27,7 +27,7 @@ import (
 	"istio.io/auth/pkg/pki"
 )
 
-type onPremPlatformImpl struct{
+type onPremPlatformImpl struct {
 	certFile string
 }
 
