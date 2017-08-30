@@ -56,8 +56,8 @@ func (f FakePlatformSpecificRequest) GetDialOptions(*Config) ([]grpc.DialOption,
 	return f.dialOption, nil
 }
 
-func (f FakePlatformSpecificRequest) GetServiceIdentity(string) (string) {
-	return f.identity
+func (f FakePlatformSpecificRequest) GetServiceIdentity(string) (string, error) {
+	return f.identity, nil
 }
 
 func (f FakePlatformSpecificRequest) IsProperPlatform() bool {
@@ -94,7 +94,7 @@ func TestStartWithArgs(t *testing.T) {
 		},
 		"Platform error": {
 			config:      &generalConfig,
-			req:         FakePlatformSpecificRequest{nil, "service1",false},
+			req:         FakePlatformSpecificRequest{nil, "service1", false},
 			cAClient:    &FakeCAClient{0, nil, nil},
 			expectedErr: "node Agent is not running on the right platform",
 			sendTimes:   0,

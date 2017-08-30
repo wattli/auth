@@ -17,6 +17,7 @@ package na
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/golang/glog"
@@ -39,21 +40,23 @@ func (na *onPremPlatformImpl) IsProperPlatform() bool {
 	return true
 }
 
-func (na *onPremPlatformImpl) GetServiceIdentity(certificateFile string) string {
+func (na *onPremPlatformImpl) GetServiceIdentity(certificateFile string) (string, error) {
 	certBytes, err := ioutil.ReadFile(certificateFile)
 	if err != nil {
-		glog.Fatalf("Failed to load cert chain file: %s", err)
+		glog.Errorf("Failed to load cert chain file: %s", err)
+		return "", err
 	}
 	cert, err := pki.ParsePemEncodedCertificate(certBytes)
 	if err != nil {
-		glog.Fatalf("Failed to parse cert chain bytes: %s", err)
+		glog.Errorf("Failed to parse cert chain bytes: %s", err)
+		return "", err
 	}
-	// TODO(wattli): refactor this extractIDs to a common place.
-  serviceIDs := pki.ExtractIDs(cert.Extensions)
+	serviceIDs := pki.ExtractIDs(cert.Extensions)
 	if len(serviceIDs) != 1 {
-		glog.Fatalf("Cert have %v SAN fields, should be 1", len(serviceIDs))
+		glog.Errorf("Cert have %v SAN fields, should be 1", len(serviceIDs))
+		return "", fmt.Errorf("Cert have %v SAN fields, should be 1", len(serviceIDs))
 	}
-  return serviceIDs[0]
+	return serviceIDs[0], nil
 }
 
 // getTLSCredentials creates transport credentials that are common to

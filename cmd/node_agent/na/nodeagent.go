@@ -34,7 +34,7 @@ type platformSpecificRequest interface {
 	// run on GCE.
 	IsProperPlatform() bool
 	// Get the service identity.
-	GetServiceIdentity(string) string
+	GetServiceIdentity(string) (string, error)
 }
 
 // CAGrpcClient is for implementing the GRPC client to talk to CA.
@@ -162,8 +162,12 @@ func (na *nodeAgentInternal) Start() error {
 }
 
 func (na *nodeAgentInternal) createRequest() ([]byte, *pb.Request, error) {
+	identity, err := na.pr.GetServiceIdentity(na.config.CertChainFile)
+	if err != nil {
+		return nil, nil, err
+	}
 	csr, privKey, err := ca.GenCSR(ca.CertOptions{
-		Host:       na.pr.GetServiceIdentity(na.config.CertChainFile),
+		Host:       identity,
 		Org:        na.config.ServiceIdentityOrg,
 		RSAKeySize: na.config.RSAKeySize,
 	})
