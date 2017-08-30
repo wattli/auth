@@ -46,7 +46,7 @@ func init() {
 	flags.StringVar(&naConfig.KeyFile,
 		"key", "/etc/certs/key.pem", "Node identity private key file")
 	flags.StringVar(&naConfig.IstioCAAddress,
-		"ca-address", "istio-ca.default.svc.cluster.local:8060", "Istio CA address")
+		"ca-address", "istio-ca:8060", "Istio CA address")
 	flags.StringVar(&naConfig.RootCACertFile, "root-cert",
 		"/etc/certs/root-cert.pem", "Root Certificate file")
 	flags.StringVar(&naConfig.Env, "env", "onprem", "Node Environment : onprem | gcp")
