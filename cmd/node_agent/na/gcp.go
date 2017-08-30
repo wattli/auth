@@ -55,5 +55,6 @@ func (na *gcpPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error
 }
 
 func (na *gcpPlatformImpl) GetServiceIdentity(file string) (string, error) {
+	// TODO(wattli): update this once we are ready for GCE
 	return "", nil
 }

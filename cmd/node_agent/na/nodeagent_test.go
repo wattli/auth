@@ -140,7 +140,7 @@ func TestStartWithArgs(t *testing.T) {
 	}
 
 	for id, c := range testCases {
-		na := nodeAgentInternal{c.config, c.req, c.cAClient}
+		na := nodeAgentInternal{c.config, c.req, c.cAClient, "service1"}
 		err := na.Start()
 		if err.Error() != c.expectedErr {
 			t.Errorf("%s: incorrect error message: %s VS %s", id, err.Error(), c.expectedErr)
@@ -196,7 +196,7 @@ func TestGettingWaitTimeFromCert(t *testing.T) {
 		}
 		req := FakePlatformSpecificRequest{nil, "service1", true}
 		caClient := FakeCAClient{0, nil, nil}
-		na := nodeAgentInternal{&config, req, &caClient}
+		na := nodeAgentInternal{&config, req, &caClient, "service1"}
 		waitTime, err := na.getWaitTimeFromCert([]byte(c.cert), c.now, 50)
 		if c.expectedErr != "" {
 			if err == nil {

@@ -43,17 +43,14 @@ func (na *onPremPlatformImpl) IsProperPlatform() bool {
 func (na *onPremPlatformImpl) GetServiceIdentity(certificateFile string) (string, error) {
 	certBytes, err := ioutil.ReadFile(certificateFile)
 	if err != nil {
-		glog.Errorf("Failed to load cert chain file: %s", err)
 		return "", err
 	}
 	cert, err := pki.ParsePemEncodedCertificate(certBytes)
 	if err != nil {
-		glog.Errorf("Failed to parse cert chain bytes: %s", err)
 		return "", err
 	}
 	serviceIDs := pki.ExtractIDs(cert.Extensions)
 	if len(serviceIDs) != 1 {
-		glog.Errorf("Cert have %v SAN fields, should be 1", len(serviceIDs))
 		return "", fmt.Errorf("Cert have %v SAN fields, should be 1", len(serviceIDs))
 	}
 	return serviceIDs[0], nil

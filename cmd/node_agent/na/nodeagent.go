@@ -90,6 +90,7 @@ type nodeAgentInternal struct {
 	config   *Config
 	pr       platformSpecificRequest
 	cAClient CAGrpcClient
+	identity string
 }
 
 // Start the node Agent.
@@ -106,6 +107,11 @@ func (na *nodeAgentInternal) Start() error {
 
 	retries := 0
 	retrialInterval := na.config.CSRInitialRetrialInterval
+	identity, err := na.pr.GetServiceIdentity(na.config.CertChainFile)
+	if err != nil {
+		return err
+	}
+	na.identity = identity
 	var success bool
 	for {
 		privKey, req, reqErr := na.createRequest()
@@ -162,12 +168,8 @@ func (na *nodeAgentInternal) Start() error {
 }
 
 func (na *nodeAgentInternal) createRequest() ([]byte, *pb.Request, error) {
-	identity, err := na.pr.GetServiceIdentity(na.config.CertChainFile)
-	if err != nil {
-		return nil, nil, err
-	}
 	csr, privKey, err := ca.GenCSR(ca.CertOptions{
-		Host:       identity,
+		Host:       na.identity,
 		Org:        na.config.ServiceIdentityOrg,
 		RSAKeySize: na.config.RSAKeySize,
 	})
