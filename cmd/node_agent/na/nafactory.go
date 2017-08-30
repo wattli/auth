@@ -40,7 +40,7 @@ func NewNodeAgent(cfg *Config) NodeAgent {
 	case "gcp":
 		na.pr = &gcpPlatformImpl{&cred.GcpTokenFetcher{}}
 	default:
-		glog.Fatalf("Invalid env %d specified", cfg.Env)
+		glog.Fatalf("Invalid env %s specified", cfg.Env)
 	}
 
 	client, err := NewCAGrpcClient(cfg, na.pr)
