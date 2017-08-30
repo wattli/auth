@@ -22,14 +22,14 @@ import (
 	"github.com/golang/glog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"istio.io/auth/pkg/pki"
 )
 
 type onPremPlatformImpl struct{}
 
 func (na *onPremPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error) {
-	transportCreds := getTLSCredentials(cfg.NodeIdentityCertFile,
-		cfg.NodeIdentityPrivateKeyFile,
-		cfg.RootCACertFile)
+	transportCreds := getTLSCredentials(cfg.CertChainFile, cfg.KeyFile, cfg.RootCACertFile)
 	var options []grpc.DialOption
 	options = append(options, grpc.WithTransportCredentials(transportCreds))
 	return options, nil
@@ -37,6 +37,23 @@ func (na *onPremPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, er
 
 func (na *onPremPlatformImpl) IsProperPlatform() bool {
 	return true
+}
+
+func (na *onPremPlatformImpl) GetServiceIdentity(certificateFile string) string {
+	certBytes, err := ioutil.ReadFile(certificateFile)
+	if err != nil {
+		glog.Fatalf("Failed to load cert chain file: %s", err)
+	}
+	cert, err := pki.ParsePemEncodedCertificate(certBytes)
+	if err != nil {
+		glog.Fatalf("Failed to parse cert chain bytes: %s", err)
+	}
+	// TODO(wattli): refactor this extractIDs to a common place.
+  serviceIDs := pki.ExtractIDs(cert.Extensions)
+	if len(serviceIDs) != 1 {
+		glog.Fatalf("Cert have %v SAN fields, should be 1", len(serviceIDs))
+	}
+  return serviceIDs[0]
 }
 
 // getTLSCredentials creates transport credentials that are common to

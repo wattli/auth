@@ -35,9 +35,9 @@ func NewNodeAgent(cfg *Config) NodeAgent {
 	}
 
 	switch cfg.Env {
-	case ONPREM:
+	case "onprem":
 		na.pr = &onPremPlatformImpl{}
-	case GCP:
+	case "gcp":
 		na.pr = &gcpPlatformImpl{&cred.GcpTokenFetcher{}}
 	default:
 		glog.Fatalf("Invalid env %d specified", cfg.Env)

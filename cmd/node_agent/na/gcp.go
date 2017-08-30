@@ -53,3 +53,7 @@ func (na *gcpPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error
 	options := []grpc.DialOption{grpc.WithPerRPCCredentials(&jwtAccess{jwtKey})}
 	return options, nil
 }
+
+func (na *gcpPlatformImpl) GetServiceIdentity(file string) string {
+	return ""
+}

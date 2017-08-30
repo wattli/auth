@@ -27,19 +27,14 @@ import (
 	pb "istio.io/auth/proto"
 )
 
-const (
-	// ONPREM Node Agent
-	ONPREM int = iota // 0
-	// GCP Node Agent
-	GCP // 1
-)
-
 // This interface is provided for implementing platform specific code.
 type platformSpecificRequest interface {
 	GetDialOptions(*Config) ([]grpc.DialOption, error)
 	// Whether the node agent is running on the right platform, e.g., if gcpPlatformImpl should only
 	// run on GCE.
 	IsProperPlatform() bool
+	// Get the service identity.
+	GetServiceIdentity(string) string
 }
 
 // CAGrpcClient is for implementing the GRPC client to talk to CA.
@@ -168,7 +163,7 @@ func (na *nodeAgentInternal) Start() error {
 
 func (na *nodeAgentInternal) createRequest() ([]byte, *pb.Request, error) {
 	csr, privKey, err := ca.GenCSR(ca.CertOptions{
-		Host:       na.config.ServiceIdentity,
+		Host:       na.pr.GetServiceIdentity(na.config.CertChainFile),
 		Org:        na.config.ServiceIdentityOrg,
 		RSAKeySize: na.config.RSAKeySize,
 	})
@@ -204,10 +199,10 @@ func (na *nodeAgentInternal) getWaitTimeFromCert(
 
 func (na *nodeAgentInternal) writeToFile(privKey []byte, cert []byte) error {
 	glog.Infof("Write key and cert to local file.")
-	if err := ioutil.WriteFile("/etc/certs/key.pem", privKey, 0600); err != nil {
+	if err := ioutil.WriteFile(na.config.KeyFile, privKey, 0600); err != nil {
 		return fmt.Errorf("cannot write service identity private key file")
 	}
-	if err := ioutil.WriteFile("/etc/certs/cert-chain.pem", cert, 0644); err != nil {
+	if err := ioutil.WriteFile(na.config.CertChainFile, cert, 0644); err != nil {
 		return fmt.Errorf("cannot write service identity certificate file")
 	}
 	return nil
