@@ -36,7 +36,7 @@ func NewNodeAgent(cfg *Config) NodeAgent {
 
 	switch cfg.Env {
 	case "onprem":
-		na.pr = &onPremPlatformImpl{}
+		na.pr = &onPremPlatformImpl{cfg.CertChainFile}
 	case "gcp":
 		na.pr = &gcpPlatformImpl{&cred.GcpTokenFetcher{}}
 	default:

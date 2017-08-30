@@ -56,7 +56,7 @@ func (f FakePlatformSpecificRequest) GetDialOptions(*Config) ([]grpc.DialOption,
 	return f.dialOption, nil
 }
 
-func (f FakePlatformSpecificRequest) GetServiceIdentity(string) (string, error) {
+func (f FakePlatformSpecificRequest) GetServiceIdentity() (string, error) {
 	return f.identity, nil
 }
 

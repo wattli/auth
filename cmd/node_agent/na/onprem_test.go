@@ -19,8 +19,6 @@ import (
 )
 
 func TestGetServiceIdentity(t *testing.T) {
-	onprem := onPremPlatformImpl{}
-
 	testCases := map[string]struct {
 		filename    string
 		expectedId  string
@@ -44,7 +42,8 @@ func TestGetServiceIdentity(t *testing.T) {
 	}
 
 	for id, c := range testCases {
-		identity, err := onprem.GetServiceIdentity(c.filename)
+		onprem := onPremPlatformImpl{c.filename}
+		identity, err := onprem.GetServiceIdentity()
 		if c.expectedErr != "" {
 			if err == nil {
 				t.Errorf("%s: no error is returned.", id)

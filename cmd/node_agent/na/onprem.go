@@ -27,7 +27,9 @@ import (
 	"istio.io/auth/pkg/pki"
 )
 
-type onPremPlatformImpl struct{}
+type onPremPlatformImpl struct{
+	certFile string
+}
 
 func (na *onPremPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error) {
 	transportCreds := getTLSCredentials(cfg.CertChainFile, cfg.KeyFile, cfg.RootCACertFile)
@@ -40,8 +42,8 @@ func (na *onPremPlatformImpl) IsProperPlatform() bool {
 	return true
 }
 
-func (na *onPremPlatformImpl) GetServiceIdentity(certificateFile string) (string, error) {
-	certBytes, err := ioutil.ReadFile(certificateFile)
+func (na *onPremPlatformImpl) GetServiceIdentity() (string, error) {
+	certBytes, err := ioutil.ReadFile(na.certFile)
 	if err != nil {
 		return "", err
 	}
