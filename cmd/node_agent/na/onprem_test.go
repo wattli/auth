@@ -35,6 +35,11 @@ func TestGetServiceIdentity(t *testing.T) {
 			expectedErr: "",
 		},
 		"Bad cert format": {
+			filename:    "testdata/cert-chain-bad1.pem",
+			expectedID:  "",
+			expectedErr: "Invalid PEM encoded certificate",
+		},
+		"Wrong file": {
 			filename:    "testdata/cert-chain-bad2.pem",
 			expectedID:  "",
 			expectedErr: "open testdata/cert-chain-bad2.pem: no such file or directory",
