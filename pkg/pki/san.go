@@ -145,7 +145,7 @@ func ExtractSANExtension(exts []pkix.Extension) *pkix.Extension {
 	return nil
 }
 
-// This method first finds the SAN extension from the given extension set, then
+// ExtractIDs first finds the SAN extension from the given extension set, then
 // extract identities from the SAN extension.
 func ExtractIDs(exts []pkix.Extension) []string {
 	sanExt := ExtractSANExtension(exts)
