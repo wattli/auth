@@ -21,22 +21,22 @@ import (
 func TestGetServiceIdentity(t *testing.T) {
 	testCases := map[string]struct {
 		filename    string
-		expectedId  string
+		expectedID  string
 		expectedErr string
 	}{
 		"Good cert1": {
 			filename:    "testdata/cert-chain-good.pem",
-			expectedId:  "spiffe://cluster.local/ns/default/sa/default",
+			expectedID:  "spiffe://cluster.local/ns/default/sa/default",
 			expectedErr: "",
 		},
 		"Good cert2": {
 			filename:    "testdata/cert-chain-good2.pem",
-			expectedId:  "spiffe://cluster.local/ns/default/sa/default",
+			expectedID:  "spiffe://cluster.local/ns/default/sa/default",
 			expectedErr: "",
 		},
 		"Bad cert format": {
 			filename:    "testdata/cert-chain-bad2.pem",
-			expectedId:  "",
+			expectedID:  "",
 			expectedErr: "open testdata/cert-chain-bad2.pem: no such file or directory",
 		},
 	}
@@ -51,8 +51,8 @@ func TestGetServiceIdentity(t *testing.T) {
 			if err.Error() != c.expectedErr {
 				t.Errorf("%s: incorrect error message: %s VS %s", id, err.Error(), c.expectedErr)
 			}
-		} else if identity != c.expectedId {
-			t.Errorf("%s: GetServiceIdentity returns identity: %s. It should be %s.", id, identity, c.expectedId)
+		} else if identity != c.expectedID {
+			t.Errorf("%s: GetServiceIdentity returns identity: %s. It should be %s.", id, identity, c.expectedID)
 		}
 	}
 }
