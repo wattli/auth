@@ -11,7 +11,7 @@ pkg_tar(
 
 pkg_tar(
     name = "istio-systemd",
-    files = ["istio.service"],
+    files = ["istio-node-agent.service"],
     mode = "644",
     package_dir = "/lib/systemd/system",
 )
