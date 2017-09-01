@@ -81,6 +81,7 @@ func getTLSCredentials(certificateFile string, keyFile string,
 		glog.Fatalf("Failed to append certificates")
 	}
 
+	glog.Infof("Current cert is %s", certificate.Certificate)
 	config := tls.Config{
 		Certificates: []tls.Certificate{certificate},
 	}
