@@ -24,7 +24,7 @@ const (
 	// defaultCSRMaxRetries is the default value of Config.CSRMaxRetries.
 	defaultCSRMaxRetries = 5
 	// defaultCSRGracePeriodPercentage is the default value of Config.CSRGracePeriodPercentage.
-	defaultCSRGracePeriodPercentage = 95
+	defaultCSRGracePeriodPercentage = 50
 )
 
 // Config is Node agent configuration that is provided from CLI.
