@@ -213,7 +213,10 @@ func TestEmptyKeyCert(t *testing.T) {
 
 	client := fake.NewSimpleClientset()
 	initSecret := createSecret(CAServiceAccount, SecretNamePrefix+CAServiceAccount, "default")
-	client.CoreV1().Secrets("default").Create(initSecret)
+	_, err := client.CoreV1().Secrets("default").Create(initSecret)
+	if err != nil {
+		t.Errorf("Failed to create secret (error: %s)", err)
+	}
 
 	caOpts := &IstioCAOptions{
 		CertTTL:          time.Hour,
