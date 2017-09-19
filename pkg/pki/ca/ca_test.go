@@ -25,13 +25,20 @@ import (
 
 	"istio.io/auth/pkg/pki"
 	"istio.io/auth/pkg/pki/testutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/pkg/api/v1"
+	ktesting "k8s.io/client-go/testing"
 )
 
 func TestSelfSignedIstioCA(t *testing.T) {
 	certTTL := 30 * time.Minute
 	caCertTTL := time.Hour
 	org := "test.ca.org"
-	ca, err := NewSelfSignedIstioCA(caCertTTL, certTTL, org)
+	caNamespace := "default"
+	client := fake.NewSimpleClientset()
+	ca, err := NewSelfSignedIstioCA(caCertTTL, certTTL, org, caNamespace, client.CoreV1())
 	if err != nil {
 		t.Errorf("Failed to create a self-signed CA: %v", err)
 	}
@@ -198,6 +205,43 @@ RRoQIlr5T8PG4vXwsn2/hohILCJJyHAee/4gIq42jLu6hQsQxcoy
 	}
 }
 
+func TestEmptyKeyCert(t *testing.T) {
+	gvr := schema.GroupVersionResource{
+		Resource: "secrets",
+		Version:  "v1",
+	}
+
+	client := fake.NewSimpleClientset()
+	initSecret := createSecret(CAServiceAccount, SecretNamePrefix+CAServiceAccount, "default")
+	client.CoreV1().Secrets("default").Create(initSecret)
+
+	caOpts := &IstioCAOptions{
+		CertTTL:          time.Hour,
+		Core:             client.CoreV1(),
+		Namespace:        "default",
+		SigningCertBytes: []byte("fake"),
+		SigningKeyBytes:  []byte("fake"),
+		RootCertBytes:    []byte("fake"),
+	}
+
+	ca, err := NewIstioCA(caOpts)
+	if err != nil {
+		t.Error(err)
+	}
+
+	expectedActions := []ktesting.Action{
+		ktesting.NewCreateAction(gvr, "default", initSecret),
+		ktesting.NewUpdateAction(gvr, "default", initSecret),
+	}
+	if err := checkActions(client.Actions(), expectedActions); err != nil {
+		t.Errorf("Error: %s", err.Error())
+	}
+
+	if ca == nil || err != nil {
+		t.Errorf("Expecting an error but an Istio CA is wrongly instantiated")
+	}
+}
+
 func TestSignCSR(t *testing.T) {
 	host := "spiffe://example.com/ns/foo/sa/bar"
 	opts := CertOptions{
@@ -280,13 +324,50 @@ func createCA() (CertificateAuthority, error) {
 	}
 	intermediateCert, intermediateKey := GenCert(intermediateCAOpts)
 
+	client := fake.NewSimpleClientset()
 	caOpts := &IstioCAOptions{
 		CertChainBytes:   intermediateCert,
 		CertTTL:          time.Hour,
+		Core:             client.CoreV1(),
+		Namespace:        "default",
 		SigningCertBytes: intermediateCert,
 		SigningKeyBytes:  intermediateKey,
 		RootCertBytes:    rootCertBytes,
 	}
 
 	return NewIstioCA(caOpts)
+}
+
+// TODO(wattli): move the two functions below as a util function to share with secret_test.go
+func createSecret(saName, scrtName, namespace string) *v1.Secret {
+	return &v1.Secret{
+		Data: map[string][]byte{
+			CACertChainID:  []byte("fake"),
+			CAPrivateKeyID: []byte("fake"),
+			RootCertID:     []byte("fake"),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{"istio.io/service-account.name": saName},
+			Name:        scrtName,
+			Namespace:   namespace,
+		},
+		Type: IstioSecretType,
+	}
+}
+
+func checkActions(actual, expected []ktesting.Action) error {
+	if len(actual) != len(expected) {
+		return fmt.Errorf("unexpected number of actions, want %d but got %d", len(expected), len(actual))
+	}
+
+	for i, action := range actual {
+		expectedAction := expected[i]
+		verb := expectedAction.GetVerb()
+		resource := expectedAction.GetResource().Resource
+		if !action.Matches(verb, resource) {
+			return fmt.Errorf("unexpected %dth action, want %q but got %q", i, expectedAction, action)
+		}
+	}
+
+	return nil
 }

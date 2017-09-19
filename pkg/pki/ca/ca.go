@@ -22,10 +22,29 @@ import (
 	"errors"
 	"time"
 
+	"github.com/golang/glog"
 	"istio.io/auth/pkg/pki"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	apiv1 "k8s.io/client-go/pkg/api/v1"
 )
 
 const (
+	// The Istio secret annotation type
+	IstioSecretType = "istio.io/key-and-cert"
+
+	// The ID/name for the certificate chain file.
+	CACertChainID = "ca-cert.pem"
+	// The ID/name for the private key file.
+	CAPrivateKeyID = "ca-key.pem"
+	// The ID/name for the CA root certificate file.
+	RootCertID = "root-cert.pem"
+
+	CAServiceAccount = "istio-ca-creds"
+	SecretNamePrefix = "istio-ca."
+
+	serviceAccountNameAnnotationKey = "istio.io/service-account.name"
+
 	// The size of a private key for a self-signed Istio CA.
 	caKeySize = 2048
 )
@@ -40,6 +59,9 @@ type CertificateAuthority interface {
 type IstioCAOptions struct {
 	CertChainBytes   []byte
 	CertTTL          time.Duration
+	Core             corev1.CoreV1Interface
+	Namespace        string
+	Org              string
 	SigningCertBytes []byte
 	SigningKeyBytes  []byte
 	RootCertBytes    []byte
@@ -56,7 +78,8 @@ type IstioCA struct {
 }
 
 // NewSelfSignedIstioCA returns a new IstioCA instance using self-signed certificate.
-func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string) (*IstioCA, error) {
+func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespace string,
+	core corev1.CoreV1Interface) (*IstioCA, error) {
 	now := time.Now()
 	options := CertOptions{
 		NotBefore:    now,
@@ -70,6 +93,8 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string) (*IstioC
 
 	opts := &IstioCAOptions{
 		CertTTL:          certTTL,
+		Core:             core,
+		Namespace:        namespace,
 		SigningCertBytes: pemCert,
 		SigningKeyBytes:  pemKey,
 		RootCertBytes:    pemCert,
@@ -80,6 +105,45 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string) (*IstioC
 // NewIstioCA returns a new IstioCA instance.
 func NewIstioCA(opts *IstioCAOptions) (*IstioCA, error) {
 	ca := &IstioCA{certTTL: opts.CertTTL}
+	// If the signing key/cert or root cert is empty, we should create a self-signed key/cert pair,
+	// and write it to the secret for persistent purpose.
+	// TODO(wattli): get rid of the NewSelfSignedIstioCA() after 0.2.
+	if len(opts.RootCertBytes) < 10 || len(opts.SigningCertBytes) < 10 || len(opts.SigningKeyBytes) < 10 {
+		now := time.Now()
+		options := CertOptions{
+			NotBefore:    now,
+			NotAfter:     now.Add(opts.CertTTL),
+			Org:          opts.Org,
+			IsCA:         true,
+			IsSelfSigned: true,
+			RSAKeySize:   caKeySize,
+		}
+		pemCert, pemKey := GenCert(options)
+		opts.CertChainBytes = []byte{}
+		opts.RootCertBytes = pemCert
+		opts.SigningCertBytes = pemCert
+		opts.SigningKeyBytes = pemKey
+
+		// Rewrite the key/cert back to secret so they will be persistent when CA restarts.
+		secret := &apiv1.Secret{
+			Data: map[string][]byte{
+				CACertChainID:  pemCert,
+				CAPrivateKeyID: pemKey,
+				RootCertID:     pemCert,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{serviceAccountNameAnnotationKey: CAServiceAccount},
+				Name:        SecretNamePrefix + CAServiceAccount,
+				Namespace:   opts.Namespace,
+			},
+			Type: IstioSecretType,
+		}
+		_, err := opts.Core.Secrets(opts.Namespace).Update(secret)
+		if err != nil {
+			glog.Errorf("Failed to create secret (error: %s)", err)
+			return nil, err
+		}
+	}
 
 	ca.certChainBytes = copyBytes(opts.CertChainBytes)
 	ca.rootCertBytes = copyBytes(opts.RootCertBytes)
@@ -89,7 +153,6 @@ func NewIstioCA(opts *IstioCAOptions) (*IstioCA, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	ca.signingKey, err = pki.ParsePemEncodedKey(opts.SigningKeyBytes)
 	if err != nil {
 		return nil, err

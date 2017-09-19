@@ -29,6 +29,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -52,11 +53,11 @@ type cliOptions struct {
 	namespace      string
 	kubeConfigFile string
 
-	selfSignedCA    bool
-	selfSignedCAOrg string
+	selfSignedCA bool
 
-	caCertTTL time.Duration
-	certTTL   time.Duration
+	selfSignedCAOrg string
+	caCertTTL       time.Duration
+	certTTL         time.Duration
 
 	grpcHostname string
 	grpcPort     int
@@ -125,8 +126,8 @@ func runCA() {
 
 	verifyCommandLineOptions()
 
-	ca := createCA()
 	cs := createClientset()
+	ca := createCA(cs.CoreV1())
 	sc := controller.NewSecretController(ca, cs.CoreV1(), opts.namespace)
 
 	stopCh := make(chan struct{})
@@ -154,11 +155,12 @@ func createClientset() *kubernetes.Clientset {
 	return cs
 }
 
-func createCA() ca.CertificateAuthority {
+func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
 	if opts.selfSignedCA {
 		glog.Info("Use self-signed certificate as the CA certificate")
 
-		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg)
+		// TODO(wattli): Refactor this and combine it with NewIstioCA().
+		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.cAOrg, opts.namespace, core)
 		if err != nil {
 			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v)", err)
 		}
@@ -172,6 +174,9 @@ func createCA() ca.CertificateAuthority {
 	caOpts := &ca.IstioCAOptions{
 		CertChainBytes:   certChainBytes,
 		CertTTL:          opts.certTTL,
+		Core:             core,
+		Namespace:        opts.namespace,
+		Org:              opts.cAOrg,
 		SigningCertBytes: readFile(opts.signingCertFile),
 		SigningKeyBytes:  readFile(opts.signingKeyFile),
 		RootCertBytes:    readFile(opts.rootCertFile),
@@ -179,7 +184,7 @@ func createCA() ca.CertificateAuthority {
 
 	ca, err := ca.NewIstioCA(caOpts)
 	if err != nil {
-		glog.Errorf("Failed to create an Istio CA (error %v)", err)
+		glog.Errorf("Failed to create an Istio CA (error: %v)", err)
 	}
 	return ca
 }
