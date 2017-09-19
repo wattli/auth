@@ -30,17 +30,19 @@ import (
 )
 
 const (
-	// The Istio secret annotation type
+	// IstioSecretType is the Istio secret annotation type.
 	IstioSecretType = "istio.io/key-and-cert"
 
-	// The ID/name for the certificate chain file.
+	// CACertChainID is the CA certificate chain file.
 	CACertChainID = "ca-cert.pem"
-	// The ID/name for the private key file.
+	// CAPrivateKeyID is the private key file of CA.
 	CAPrivateKeyID = "ca-key.pem"
-	// The ID/name for the CA root certificate file.
+	// RootCertID is the root certificate file.
 	RootCertID = "root-cert.pem"
 
+	// CAServiceAccount is the name of the secret to store CA key/cert.
 	CAServiceAccount = "istio-ca-creds"
+	// SecretNamePrefix is the prefix of the secret.
 	SecretNamePrefix = "istio-ca."
 
 	serviceAccountNameAnnotationKey = "istio.io/service-account.name"
