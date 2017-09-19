@@ -108,6 +108,8 @@ func NewIstioCA(opts *IstioCAOptions) (*IstioCA, error) {
 	// If the signing key/cert or root cert is empty, we should create a self-signed key/cert pair,
 	// and write it to the secret for persistent purpose.
 	// TODO(wattli): get rid of the NewSelfSignedIstioCA() after 0.2.
+	// K8s secret has a bug that you can't specify empty content, so we put a small content in it and
+	// use 10 as a threshold.
 	if len(opts.RootCertBytes) < 10 || len(opts.SigningCertBytes) < 10 || len(opts.SigningKeyBytes) < 10 {
 		now := time.Now()
 		options := CertOptions{
