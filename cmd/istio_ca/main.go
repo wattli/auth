@@ -160,7 +160,7 @@ func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
 		glog.Info("Use self-signed certificate as the CA certificate")
 
 		// TODO(wattli): Refactor this and combine it with NewIstioCA().
-		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.cAOrg, opts.namespace, core)
+		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg, opts.namespace, core)
 		if err != nil {
 			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v)", err)
 		}
@@ -176,7 +176,7 @@ func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
 		CertTTL:          opts.certTTL,
 		Core:             core,
 		Namespace:        opts.namespace,
-		Org:              opts.cAOrg,
+		Org:              opts.selfSignedCAOrg,
 		SigningCertBytes: readFile(opts.signingCertFile),
 		SigningKeyBytes:  readFile(opts.signingKeyFile),
 		RootCertBytes:    readFile(opts.rootCertFile),
