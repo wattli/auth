@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	// istioSecretType is the Istio secret annotation type.
-	istioSecretType = "istio.io/key-and-cert"
+	// istioCASecretType is the Istio secret annotation type.
+	istioCASecretType = "istio.io/ca-root"
 
 	// cACertChainID is the CA certificate chain file.
 	cACertID = "ca-cert.pem"
@@ -107,11 +107,11 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespac
 				Name:      cASecret,
 				Namespace: namespace,
 			},
-			Type: istioSecretType,
+			Type: istioCASecretType,
 		}
 		_, err := core.Secrets(namespace).Create(secret)
 		if err != nil {
-			return nil, err
+			glog.Errorf("Failed to write secret to CA (error: %s). This CA will not persist when restart.", err)
 		}
 	} else {
 		// Reuse existing key/cert in secrets.

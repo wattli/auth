@@ -420,6 +420,6 @@ func createSecret(namespace, signingCert, signingKey, rootCert string) *v1.Secre
 			Name:      cASecret,
 			Namespace: namespace,
 		},
-		Type: istioSecretType,
+		Type: istioCASecretType,
 	}
 }
