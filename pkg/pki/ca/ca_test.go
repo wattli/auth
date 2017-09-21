@@ -28,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/pkg/api/v1"
-	ktesting "k8s.io/client-go/testing"
 )
 
 func TestSelfSignedIstioCAWithoutSecret(t *testing.T) {
@@ -108,12 +107,12 @@ func TestSelfSignedIstioCAWithoutSecret(t *testing.T) {
 		t.Errorf("SAN field does not match: %s is expected but actual is %s", bs, san.Value)
 	}
 
-	caSecret, err := client.CoreV1().Secrets("default").Get(CASecret, metav1.GetOptions{})
+	caSecret, err := client.CoreV1().Secrets("default").Get(cASecret, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("Failed to get secret (error: %s)", err)
 	}
 
-	signingCert, err := pki.ParsePemEncodedCertificate(caSecret.Data[CACertChainID])
+	signingCert, err := pki.ParsePemEncodedCertificate(caSecret.Data[cACertID])
 	if err != nil {
 		t.Errorf("Failed to parse cert (error: %s)", err)
 	}
@@ -125,7 +124,7 @@ func TestSelfSignedIstioCAWithoutSecret(t *testing.T) {
 		t.Error("CertChain should be empty")
 	}
 
-	rootCertBytes := copyBytes(caSecret.Data[RootCertID])
+	rootCertBytes := copyBytes(caSecret.Data[cACertID])
 	if !bytes.Equal(ca.rootCertBytes, rootCertBytes) {
 		t.Error("Root cert does not match")
 	}
@@ -402,7 +401,6 @@ func createCA() (CertificateAuthority, error) {
 	caOpts := &IstioCAOptions{
 		CertChainBytes:   intermediateCert,
 		CertTTL:          time.Hour,
-		Namespace:        "default",
 		SigningCertBytes: intermediateCert,
 		SigningKeyBytes:  intermediateKey,
 		RootCertBytes:    rootCertBytes,
@@ -415,15 +413,13 @@ func createCA() (CertificateAuthority, error) {
 func createSecret(namespace, signingCert, signingKey, rootCert string) *v1.Secret {
 	return &v1.Secret{
 		Data: map[string][]byte{
-			CACertChainID:  []byte(signingCert),
-			CAPrivateKeyID: []byte(signingKey),
-			RootCertID:     []byte(rootCert),
+			cACertID:       []byte(signingCert),
+			cAPrivateKeyID: []byte(signingKey),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      CASecret,
+			Name:      cASecret,
 			Namespace: namespace,
 		},
-		Type: IstioSecretType,
+		Type: istioSecretType,
 	}
 }
-

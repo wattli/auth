@@ -30,24 +30,22 @@ import (
 )
 
 const (
-	// IstioSecretType is the Istio secret annotation type.
-	IstioSecretType = "istio.io/key-and-cert"
+	// istioSecretType is the Istio secret annotation type.
+	istioSecretType = "istio.io/key-and-cert"
 
 	// CACertChainID is the CA certificate chain file.
-	CACertChainID = "ca-cert.pem"
-	// CAPrivateKeyID is the private key file of CA.
-	CAPrivateKeyID = "ca-key.pem"
-	// RootCertID is the root certificate file.
-	RootCertID = "root-cert.pem"
+	cACertID = "ca-cert.pem"
+	// cAPrivateKeyID is the private key file of CA.
+	cAPrivateKeyID = "ca-key.pem"
 
-	// CASecret stores the key/cert of self-signed CA for persistency purpose.
-	CASecret = "istio-ca-secret"
+	// cASecret stores the key/cert of self-signed CA for persistency purpose.
+	cASecret = "istio-ca-secret"
 
 	// The size of a private key for a self-signed Istio CA.
 	caKeySize = 2048
 )
 
-// CertificateAuthority contains methods to bfe supported by a CA.
+// CertificateAuthority contains methods to be supported by a CA.
 type CertificateAuthority interface {
 	Sign(csrPEM []byte) ([]byte, error)
 	GetRootCertificate() []byte
@@ -57,7 +55,6 @@ type CertificateAuthority interface {
 type IstioCAOptions struct {
 	CertChainBytes   []byte
 	CertTTL          time.Duration
-	Namespace        string
 	SigningCertBytes []byte
 	SigningKeyBytes  []byte
 	RootCertBytes    []byte
@@ -77,13 +74,14 @@ type IstioCA struct {
 func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespace string,
 	core corev1.CoreV1Interface) (*IstioCA, error) {
 
-	caSecret, err := core.Secrets(namespace).Get(CASecret, metav1.GetOptions{})
+	// For the first time the CA is up, it generates a self-signed key/cert pair and write it to
+	// cASecret. For subsequent restart, CA will reads key/cert from cASecret.
+	caSecret, err := core.Secrets(namespace).Get(cASecret, metav1.GetOptions{})
 	opts := &IstioCAOptions{
-		CertTTL:   certTTL,
-		Namespace: namespace,
+		CertTTL: certTTL,
 	}
 	if err != nil {
-		glog.Warningf("Failed to get secret (error: %s), will create one", err)
+		glog.Infof("Failed to get secret (error: %s), will create one", err)
 
 		now := time.Now()
 		options := CertOptions{
@@ -103,26 +101,26 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespac
 		// Rewrite the key/cert back to secret so they will be persistent when CA restarts.
 		secret := &apiv1.Secret{
 			Data: map[string][]byte{
-				CACertChainID:  pemCert,
-				CAPrivateKeyID: pemKey,
-				RootCertID:     pemCert,
+				cACertID:       pemCert,
+				cAPrivateKeyID: pemKey,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      CASecret,
+				Name:      cASecret,
 				Namespace: namespace,
 			},
-			Type: IstioSecretType,
+			Type: istioSecretType,
 		}
-		_, err := core.Secrets(opts.Namespace).Create(secret)
+		_, err := core.Secrets(namespace).Create(secret)
 		if err != nil {
 			glog.Errorf("Failed to create secret (error: %s)", err)
 			return nil, err
 		}
 	} else {
 		// Reuse existing key/cert in secrets.
-		opts.SigningCertBytes = caSecret.Data[CACertChainID]
-		opts.SigningKeyBytes = caSecret.Data[CAPrivateKeyID]
-		opts.RootCertBytes = caSecret.Data[RootCertID]
+		// TODO(wattli): better handle the logic when these key/cert are invalid.
+		opts.SigningCertBytes = caSecret.Data[cACertID]
+		opts.SigningKeyBytes = caSecret.Data[cAPrivateKeyID]
+		opts.RootCertBytes = caSecret.Data[cACertID]
 	}
 
 	return NewIstioCA(opts)

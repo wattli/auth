@@ -50,9 +50,9 @@ type cliOptions struct {
 	signingKeyFile  string
 	rootCertFile    string
 
-	namespace          string
-	targetAllNamespace bool
-	kubeConfigFile     string
+	namespace           string
+	targetAllNamespaces bool
+	kubeConfigFile      string
 
 	selfSignedCA    bool
 	selfSignedCAOrg string
@@ -85,8 +85,8 @@ func init() {
 	flags.StringVar(&opts.rootCertFile, "root-cert", "", "Specifies path to the root certificate file")
 
 	flags.StringVar(&opts.namespace, "namespace", "", "The namesapce that CA is running at.")
-	flags.BoolVar(&opts.targetAllNamespace, "all-namespace", false,
-		"Indicates whether to listen to all namespace or just the namespace CA is running at")
+	flags.BoolVar(&opts.targetAllNamespaces, "all-namespaces", false,
+		"Indicates whether to listen to all namespaces or just the namespace CA is running at")
 
 	flags.StringVar(&opts.kubeConfigFile, "kube-config", "",
 		"Specifies path to kubeconfig file. This must be specified when not running inside a Kubernetes pod.")
@@ -94,12 +94,10 @@ func init() {
 	flags.BoolVar(&opts.selfSignedCA, "self-signed-ca", false,
 		"Indicates whether to use auto-generated self-signed CA certificate. "+
 			"When set to true, the '--signing-cert' and '--signing-key' options are ignored.")
-
 	flags.StringVar(&opts.selfSignedCAOrg, "self-signed-ca-org", "k8s.cluster.local",
 		fmt.Sprintf("The issuer organization used in self-signed CA certificate (default to %s)",
 			selfSignedCAOrgDefault))
 
-	// TODO(wattli): change it to IntVar to make it configurable in yaml.
 	flags.DurationVar(&opts.caCertTTL, "ca-cert-ttl", defaultCACertTTL,
 		"The TTL of self-signed CA root certificate")
 	flags.DurationVar(&opts.certTTL, "cert-ttl", time.Hour, "The TTL of issued certificates")
@@ -137,7 +135,8 @@ func runCA() {
 	cs := createClientset()
 	ca := createCA(cs.CoreV1())
 	controllerNs := opts.namespace
-	if opts.targetAllNamespace {
+	if opts.targetAllNamespaces {
+		// Listen to all namespaces by specifying controllerNs to empty.
 		controllerNs = ""
 	}
 	sc := controller.NewSecretController(ca, cs.CoreV1(), controllerNs)
@@ -175,7 +174,7 @@ func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
 		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg,
 			opts.namespace, core)
 		if err != nil {
-			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v)", err)
+			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v).", err)
 		}
 		return ca
 	}
