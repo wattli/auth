@@ -56,9 +56,9 @@ type cliOptions struct {
 
 	selfSignedCA    bool
 	selfSignedCAOrg string
-	
-	caCertTTL       time.Duration
-	certTTL         time.Duration
+
+	caCertTTL time.Duration
+	certTTL   time.Duration
 
 	grpcHostname string
 	grpcPort     int
