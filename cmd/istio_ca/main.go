@@ -56,6 +56,7 @@ type cliOptions struct {
 
 	kubeConfigFile string
 
+	selfSignedCA        bool
 	selfSignedCAOrg string
 
 	caCertTTL time.Duration
@@ -63,9 +64,6 @@ type cliOptions struct {
 
 	grpcHostname string
 	grpcPort     int
-
-	selfSignedCA        bool
-	targetAllNamespaces bool
 }
 
 var (
