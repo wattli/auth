@@ -56,7 +56,7 @@ type cliOptions struct {
 
 	kubeConfigFile string
 
-	selfSignedCA        bool
+	selfSignedCA    bool
 	selfSignedCAOrg string
 
 	caCertTTL time.Duration
@@ -169,7 +169,7 @@ func createCA(core corev1.SecretsGetter) ca.CertificateAuthority {
 		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg,
 			opts.caNamespace, core)
 		if err != nil {
-			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v).", err)
+			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v)", err)
 		}
 		return ca
 	}
