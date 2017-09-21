@@ -54,8 +54,7 @@ type cliOptions struct {
 	targetAllNamespace bool
 	kubeConfigFile     string
 
-	selfSignedCA bool
-
+	selfSignedCA    bool
 	selfSignedCAOrg string
 	caCertTTL       time.Duration
 	certTTL         time.Duration
