@@ -26,7 +26,6 @@ go_test(
     deps = [
         "//pkg/pki:go_default_library",
         "//pkg/pki/testutil:go_default_library",
-        "@io_k8s_apimachinery//pkg/runtime/schema:go_default_library",
         "@io_k8s_client_go//kubernetes/fake:go_default_library",
         "@io_k8s_client_go//testing:go_default_library",
     ],

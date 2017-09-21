@@ -50,7 +50,8 @@ type cliOptions struct {
 	signingKeyFile  string
 	rootCertFile    string
 
-	namespace      string
+	namespace   string
+	targetAllNamespace bool
 	kubeConfigFile string
 
 	selfSignedCA bool
@@ -83,19 +84,22 @@ func init() {
 	flags.StringVar(&opts.signingKeyFile, "signing-key", "", "Specifies path to the CA signing key file")
 	flags.StringVar(&opts.rootCertFile, "root-cert", "", "Specifies path to the root certificate file")
 
-	flags.StringVar(&opts.namespace, "namespace", "",
-		"Select a namespace for the CA to listen to. If unspecified, Istio CA tries to use the ${"+namespaceKey+"} "+
-			"environment variable. If neither is set, Istio CA listens to all namespaces.")
+	flags.StringVar(&opts.namespace, "namespace", "", "The namesapce that CA is running at.")
+	flags.BoolVar(&opts.targetAllNamespace, "all-namespace", false,
+		"Indicates whether to listen to all namespace or just the namespace CA is running at")
+
 	flags.StringVar(&opts.kubeConfigFile, "kube-config", "",
 		"Specifies path to kubeconfig file. This must be specified when not running inside a Kubernetes pod.")
 
 	flags.BoolVar(&opts.selfSignedCA, "self-signed-ca", false,
 		"Indicates whether to use auto-generated self-signed CA certificate. "+
 			"When set to true, the '--signing-cert' and '--signing-key' options are ignored.")
+
 	flags.StringVar(&opts.selfSignedCAOrg, "self-signed-ca-org", "k8s.cluster.local",
 		fmt.Sprintf("The issuer organization used in self-signed CA certificate (default to %s)",
 			selfSignedCAOrgDefault))
 
+	// TODO(wattli): change it to IntVar to make it configurable in yaml.
 	flags.DurationVar(&opts.caCertTTL, "ca-cert-ttl", defaultCACertTTL,
 		"The TTL of self-signed CA root certificate")
 	flags.DurationVar(&opts.certTTL, "cert-ttl", time.Hour, "The TTL of issued certificates")
@@ -122,13 +126,21 @@ func runCA() {
 		if value, exists := os.LookupEnv(namespaceKey); exists {
 			opts.namespace = value
 		}
+
+		if opts.namespace == "" {
+			glog.Fatal("Fail to get the namespace of this CA")
+		}
 	}
 
 	verifyCommandLineOptions()
 
 	cs := createClientset()
 	ca := createCA(cs.CoreV1())
-	sc := controller.NewSecretController(ca, cs.CoreV1(), opts.namespace)
+	controllerNs := opts.namespace
+	if opts.targetAllNamespace {
+		controllerNs = ""
+	}
+	sc := controller.NewSecretController(ca, cs.CoreV1(), controllerNs)
 
 	stopCh := make(chan struct{})
 	sc.Run(stopCh)
@@ -160,7 +172,8 @@ func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
 		glog.Info("Use self-signed certificate as the CA certificate")
 
 		// TODO(wattli): Refactor this and combine it with NewIstioCA().
-		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg, opts.namespace, core)
+		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg,
+			opts.namespace, core)
 		if err != nil {
 			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v)", err)
 		}
@@ -174,9 +187,6 @@ func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
 	caOpts := &ca.IstioCAOptions{
 		CertChainBytes:   certChainBytes,
 		CertTTL:          opts.certTTL,
-		Core:             core,
-		Namespace:        opts.namespace,
-		Org:              opts.selfSignedCAOrg,
 		SigningCertBytes: readFile(opts.signingCertFile),
 		SigningKeyBytes:  readFile(opts.signingKeyFile),
 		RootCertBytes:    readFile(opts.rootCertFile),
