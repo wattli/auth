@@ -50,11 +50,10 @@ type cliOptions struct {
 	signingKeyFile  string
 	rootCertFile    string
 
-	namespace           string
-	targetAllNamespaces bool
-	kubeConfigFile      string
+	namespace string
 
-	selfSignedCA    bool
+	kubeConfigFile string
+
 	selfSignedCAOrg string
 
 	caCertTTL time.Duration
@@ -62,6 +61,9 @@ type cliOptions struct {
 
 	grpcHostname string
 	grpcPort     int
+
+	selfSignedCA        bool
+	targetAllNamespaces bool
 }
 
 var (
@@ -167,7 +169,7 @@ func createClientset() *kubernetes.Clientset {
 	return cs
 }
 
-func createCA(core corev1.CoreV1Interface) ca.CertificateAuthority {
+func createCA(core corev1.SecretsGetter) ca.CertificateAuthority {
 	if opts.selfSignedCA {
 		glog.Info("Use self-signed certificate as the CA certificate")
 

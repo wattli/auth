@@ -70,7 +70,8 @@ type IstioCA struct {
 }
 
 // NewSelfSignedIstioCA returns a new IstioCA instance using self-signed certificate.
-func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespace string, core corev1.CoreV1Interface) (*IstioCA, error) {
+func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespace string,
+	core corev1.SecretsGetter) (*IstioCA, error) {
 
 	// For the first time the CA is up, it generates a self-signed key/cert pair and write it to
 	// cASecret. For subsequent restart, CA will reads key/cert from cASecret.
