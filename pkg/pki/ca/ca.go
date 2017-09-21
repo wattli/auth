@@ -33,11 +33,10 @@ const (
 	// istioSecretType is the Istio secret annotation type.
 	istioSecretType = "istio.io/key-and-cert"
 
-	// CACertChainID is the CA certificate chain file.
+	// cACertChainID is the CA certificate chain file.
 	cACertID = "ca-cert.pem"
 	// cAPrivateKeyID is the private key file of CA.
 	cAPrivateKeyID = "ca-key.pem"
-
 	// cASecret stores the key/cert of self-signed CA for persistency purpose.
 	cASecret = "istio-ca-secret"
 
