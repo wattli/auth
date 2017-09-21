@@ -56,6 +56,7 @@ type cliOptions struct {
 
 	selfSignedCA    bool
 	selfSignedCAOrg string
+	
 	caCertTTL       time.Duration
 	certTTL         time.Duration
 
