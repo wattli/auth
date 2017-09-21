@@ -47,7 +47,7 @@ const (
 	caKeySize = 2048
 )
 
-// CertificateAuthority contains methods to be supported by a CA.
+// CertificateAuthority contains methods to bfe supported by a CA.
 type CertificateAuthority interface {
 	Sign(csrPEM []byte) ([]byte, error)
 	GetRootCertificate() []byte
@@ -58,7 +58,6 @@ type IstioCAOptions struct {
 	CertChainBytes   []byte
 	CertTTL          time.Duration
 	Namespace        string
-	Org              string
 	SigningCertBytes []byte
 	SigningKeyBytes  []byte
 	RootCertBytes    []byte

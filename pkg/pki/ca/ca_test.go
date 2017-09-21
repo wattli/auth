@@ -427,19 +427,3 @@ func createSecret(namespace, signingCert, signingKey, rootCert string) *v1.Secre
 	}
 }
 
-func checkActions(actual, expected []ktesting.Action) error {
-	if len(actual) != len(expected) {
-		return fmt.Errorf("unexpected number of actions, want %d but got %d", len(expected), len(actual))
-	}
-
-	for i, action := range actual {
-		expectedAction := expected[i]
-		verb := expectedAction.GetVerb()
-		resource := expectedAction.GetResource().Resource
-		if !action.Matches(verb, resource) {
-			return fmt.Errorf("unexpected %dth action, want %q but got %q", i, expectedAction, action)
-		}
-	}
-
-	return nil
-}
