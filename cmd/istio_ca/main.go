@@ -50,9 +50,9 @@ type cliOptions struct {
 	signingKeyFile  string
 	rootCertFile    string
 
-	namespace   string
+	namespace          string
 	targetAllNamespace bool
-	kubeConfigFile string
+	kubeConfigFile     string
 
 	selfSignedCA bool
 

@@ -420,8 +420,8 @@ func createSecret(namespace, signingCert, signingKey, rootCert string) *v1.Secre
 			RootCertID:     []byte(rootCert),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        CASecret,
-			Namespace:   namespace,
+			Name:      CASecret,
+			Namespace: namespace,
 		},
 		Type: IstioSecretType,
 	}

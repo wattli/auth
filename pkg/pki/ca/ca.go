@@ -80,8 +80,8 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespac
 
 	caSecret, err := core.Secrets(namespace).Get(CASecret, metav1.GetOptions{})
 	opts := &IstioCAOptions{
-		CertTTL:          certTTL,
-		Namespace:        namespace,
+		CertTTL:   certTTL,
+		Namespace: namespace,
 	}
 	if err != nil {
 		glog.Warningf("Failed to get secret (error: %s), will create one", err)
@@ -109,8 +109,8 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespac
 				RootCertID:     pemCert,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        CASecret,
-				Namespace:   namespace,
+				Name:      CASecret,
+				Namespace: namespace,
 			},
 			Type: IstioSecretType,
 		}
