@@ -52,7 +52,7 @@ type cliOptions struct {
 
 	namespace string
 
-	caNamespace string
+	istioCaStorageNamespace string
 
 	kubeConfigFile string
 
@@ -89,7 +89,8 @@ func init() {
 	flags.StringVar(&opts.namespace, "namespace", "",
 		"Select a namespace for the CA to listen to. If unspecified, Istio CA tries to use the ${"+namespaceKey+"} "+
 			"environment variable. If neither is set, Istio CA listens to all namespaces.")
-	flags.StringVar(&opts.caNamespace, "ca-namespace", "istio-system", "Specify whether the current CA is running at.")
+	flags.StringVar(&opts.istioCaStorageNamespace, "istio-ca-storage-namespace", "istio-system", "Namespace where " +
+			"the Istio CA pods is running. Will not be used if explicit file or other storage mechanism is specified.")
 
 	flags.StringVar(&opts.kubeConfigFile, "kube-config", "",
 		"Specifies path to kubeconfig file. This must be specified when not running inside a Kubernetes pod.")
@@ -122,12 +123,13 @@ func main() {
 }
 
 func runCA() {
-	// When -namespace is not set, try to read the namespace from environment variable.
 	if value, exists := os.LookupEnv(namespaceKey); exists {
+		// When -namespace is not set, try to read the namespace from environment variable.
 		if opts.namespace == "" {
 			opts.namespace = value
 		}
-		opts.caNamespace = value
+		// Use environment variable for istioCaStorageNamespace if it exists
+		opts.istioCaStorageNamespace = value
 	}
 
 	verifyCommandLineOptions()
@@ -167,7 +169,7 @@ func createCA(core corev1.SecretsGetter) ca.CertificateAuthority {
 
 		// TODO(wattli): Refactor this and combine it with NewIstioCA().
 		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg,
-			opts.caNamespace, core)
+			opts.istioCaStorageNamespace, core)
 		if err != nil {
 			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v)", err)
 		}
