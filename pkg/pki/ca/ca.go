@@ -70,8 +70,7 @@ type IstioCA struct {
 }
 
 // NewSelfSignedIstioCA returns a new IstioCA instance using self-signed certificate.
-func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespace string,
-	core corev1.CoreV1Interface) (*IstioCA, error) {
+func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespace string, core corev1.CoreV1Interface) (*IstioCA, error) {
 
 	// For the first time the CA is up, it generates a self-signed key/cert pair and write it to
 	// cASecret. For subsequent restart, CA will reads key/cert from cASecret.
@@ -111,12 +110,11 @@ func NewSelfSignedIstioCA(caCertTTL, certTTL time.Duration, org string, namespac
 		}
 		_, err := core.Secrets(namespace).Create(secret)
 		if err != nil {
-			glog.Errorf("Failed to create secret (error: %s)", err)
 			return nil, err
 		}
 	} else {
 		// Reuse existing key/cert in secrets.
-		// TODO(wattli): better handle the logic when these key/cert are invalid.
+		// TODO(wattli): better handle the logic when the key/cert are invalid.
 		opts.SigningCertBytes = caSecret.Data[cACertID]
 		opts.SigningKeyBytes = caSecret.Data[cAPrivateKeyID]
 		opts.RootCertBytes = caSecret.Data[cACertID]

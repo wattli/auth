@@ -85,11 +85,12 @@ func init() {
 	flags.StringVar(&opts.rootCertFile, "root-cert", "", "Specifies path to the root certificate file")
 
 	flags.StringVar(&opts.namespace, "namespace", "", "The namesapce that CA is running at.")
-	flags.BoolVar(&opts.targetAllNamespaces, "all-namespaces", false,
-		"Indicates whether to listen to all namespaces or just the namespace CA is running at")
 
 	flags.StringVar(&opts.kubeConfigFile, "kube-config", "",
 		"Specifies path to kubeconfig file. This must be specified when not running inside a Kubernetes pod.")
+
+	flags.BoolVar(&opts.targetAllNamespaces, "all-namespaces", false,
+		"Indicates whether to listen to all namespaces or just the namespace CA is running at")
 
 	flags.BoolVar(&opts.selfSignedCA, "self-signed-ca", false,
 		"Indicates whether to use auto-generated self-signed CA certificate. "+
