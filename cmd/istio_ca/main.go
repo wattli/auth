@@ -52,6 +52,8 @@ type cliOptions struct {
 
 	namespace string
 
+	caNamespace string
+
 	kubeConfigFile string
 
 	selfSignedCAOrg string
@@ -86,13 +88,13 @@ func init() {
 	flags.StringVar(&opts.signingKeyFile, "signing-key", "", "Specifies path to the CA signing key file")
 	flags.StringVar(&opts.rootCertFile, "root-cert", "", "Specifies path to the root certificate file")
 
-	flags.StringVar(&opts.namespace, "namespace", "", "The namesapce that CA is running at.")
+	flags.StringVar(&opts.namespace, "namespace", "",
+		"Select a namespace for the CA to listen to. If unspecified, Istio CA tries to use the ${"+namespaceKey+"} "+
+			"environment variable. If neither is set, Istio CA listens to all namespaces.")
+	flags.StringVar(&opts.caNamespace, "ca-namespace", "istio-system", "Specify whether the current CA is running at.")
 
 	flags.StringVar(&opts.kubeConfigFile, "kube-config", "",
 		"Specifies path to kubeconfig file. This must be specified when not running inside a Kubernetes pod.")
-
-	flags.BoolVar(&opts.targetAllNamespaces, "all-namespaces", false,
-		"Indicates whether to listen to all namespaces or just the namespace CA is running at")
 
 	flags.BoolVar(&opts.selfSignedCA, "self-signed-ca", false,
 		"Indicates whether to use auto-generated self-signed CA certificate. "+
@@ -122,27 +124,19 @@ func main() {
 }
 
 func runCA() {
-	if opts.namespace == "" {
-		// When -namespace is not set, try to read the namespace from environment variable.
-		if value, exists := os.LookupEnv(namespaceKey); exists {
+	// When -namespace is not set, try to read the namespace from environment variable.
+	if value, exists := os.LookupEnv(namespaceKey); exists {
+		if opts.namespace == "" {
 			opts.namespace = value
 		}
-
-		if opts.namespace == "" {
-			glog.Fatal("Fail to get the namespace of this CA")
-		}
+		opts.caNamespace = value
 	}
 
 	verifyCommandLineOptions()
 
 	cs := createClientset()
 	ca := createCA(cs.CoreV1())
-	controllerNs := opts.namespace
-	if opts.targetAllNamespaces {
-		// Listen to all namespaces by specifying controllerNs to empty.
-		controllerNs = ""
-	}
-	sc := controller.NewSecretController(ca, cs.CoreV1(), controllerNs)
+	sc := controller.NewSecretController(ca, cs.CoreV1(), opts.namespace)
 
 	stopCh := make(chan struct{})
 	sc.Run(stopCh)
@@ -175,7 +169,7 @@ func createCA(core corev1.SecretsGetter) ca.CertificateAuthority {
 
 		// TODO(wattli): Refactor this and combine it with NewIstioCA().
 		ca, err := ca.NewSelfSignedIstioCA(opts.caCertTTL, opts.certTTL, opts.selfSignedCAOrg,
-			opts.namespace, core)
+			opts.caNamespace, core)
 		if err != nil {
 			glog.Fatalf("Failed to create a self-signed Istio CA (error: %v).", err)
 		}
