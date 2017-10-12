@@ -8,19 +8,11 @@
 
 Istio Auth's aim is to enhance the security of microservices and their communication without requiring service code changes. It is responsible for:
 
-
-
 *   Providing each service with a strong identity that represents its role to enable interoperability across clusters and clouds
 
 *   Securing service to service communication and end-user to service communication
 
 *   Providing a key management system to automate key and certificate generation, distribution, rotation, and revocation
-
-*   Upcoming features:
-    *   Powerful authorization mechanisms: [ABAC](https://docs.google.com/document/d/1U2XFmah7tYdmC5lWkk3D43VMAAQ0xkBatKmohf90ICA/edit), [RBAC](https://docs.google.com/document/d/1dKXUEOxrj4TWZKrW7fx_A-nrOdVD4tYolpjgT8DYBTY/edit), Authorization hooks.
-    *   [End-user authentication](https://docs.google.com/document/d/1rU0OgZ0vGNXVlm_WjA-dnfQdS3BsyqmqXnu254pFnZg/edit)
-    *   CA and identity Pluggability
-
 
 ## Architecture
 
@@ -30,14 +22,11 @@ The diagram below shows Istio Auth's architecture, which includes three primary 
 
 As illustrated in the diagram, Istio Auth leverages secret volume mount to deliver keys/certs from Istio CA to Kubernetes containers. For services running on VM/bare-metal machines, we introduce a node agent, which is a process running on each VM/bare-metal machine. It generates the private key and CSR (certificate signing request) locally, sends CSR to Istio CA for signing, and delivers the generated certificate together with the private key to Envoy.
 
-
-
 ## Components
 
 ### Identity
 
 Istio Auth uses [Kubernetes service accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) to identify who runs the service:
-
 
 *   A service account in Istio has the format "spiffe://\<_domain_\>/ns/\<_namespace_>/sa/\<_serviceaccount_\>".
     *   _domain_ is currently _cluster.local_. We will support customization of domain in the near future.
@@ -58,7 +47,6 @@ Istio Auth uses [Kubernetes service accounts](https://kubernetes.io/docs/tasks/c
 
 Service-to-service communication is tunneled through the client side [Envoy](https://envoyproxy.github.io/envoy/) and the server side Envoy. End-to-end communication is secured by:
 
-
 *   Local TCP connections between the service and Envoy
 
 *   Mutual TLS connections between proxies
@@ -70,7 +58,6 @@ Service-to-service communication is tunneled through the client side [Envoy](htt
 Istio v0.2 supports services running on both Kubernetes pods and VM/bare-metal machines. We use different key provisioning mechanisms for each scenario.
 
 For services running on Kubernetes pods, the per-cluster Istio CA (Certificate Authority) automates the key & certificate management process. It mainly performs four critical operations :
-
 
 *   Generate a [SPIFFE](https://spiffe.github.io/docs/svid) key and certificate pair for each service account
 
@@ -88,7 +75,6 @@ The Istio Auth workflow consists of two phases, deployment and runtime. For the 
 
 ### Deployment phase (Kubernetes Scenario)
 
-
 1.  Istio CA watches Kubernetes API Server, creates a [SPIFFE](https://spiffe.github.io/docs/svid) key and certificate pair for each of the existing and new service accounts, and sends them to API Server.
 
 1.  When a pod is created, API Server mounts the key and certificate pair according to the service account using [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
@@ -99,6 +85,7 @@ which
 
 ### Deployment phase (VM/bare-metal Machines Scenario)
 
+1.  Adding service account for the service using Kubernetes annotation.
 
 1.  Istio CA creates a gRPC service to take CSR request.
 
@@ -113,8 +100,6 @@ which
 
 ### Runtime phase
 
-
-
 1.  The outbound traffic from a client service is rerouted to its local Envoy.
 
 1.  The client side Envoy starts a mutual TLS handshake with the server side Envoy. During the handshake, it also does a secure naming check to verify that the service account presented in the server certificate can run the server service.
@@ -126,8 +111,6 @@ which
 In this section, we provide a few deployment guidelines and then discuss a real-world scenario.
 
 ### Deployment guidelines
-
-
 
 *   If there are multiple service operators (a.k.a. [SREs](https://en.wikipedia.org/wiki/Site_reliability_engineering)) deploying different services in a cluster (typically in a medium- or large-size cluster), we recommend creating a separate [namespace](https://kubernetes.io/docs/tasks/administer-cluster/namespaces-walkthrough/) for each SRE team to isolate their access. For example, you could create a "team1-ns" namespace for team1, and "team2-ns" namespace for team2, such that both teams won't be able to access each other's services.
 
@@ -160,6 +143,6 @@ In this setup, Istio CA is able to provide keys and certificates management for 
 
 *   Unix domain socket for local communication between service and Envoy
 
-*   Middle proxy support
+*   Layer-7 Middle proxy support
 
 *   Pluggable key management component
