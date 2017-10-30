@@ -17,11 +17,11 @@ package main
 import (
 	"os"
 
-	"istio.io/auth/cmd/node_agent/na"
-	"istio.io/auth/pkg/cmd"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+
+	"istio.io/auth/cmd/node_agent/na"
+	"istio.io/auth/pkg/cmd"
 )
 
 var (
@@ -41,15 +41,15 @@ func init() {
 
 	flags.StringVar(&naConfig.ServiceIdentityOrg, "org", "", "Organization for the cert")
 	flags.IntVar(&naConfig.RSAKeySize, "key-size", 1024, "Size of generated private key")
-	flags.StringVar(&naConfig.CertChainFile, "cert-chain",
-		"/etc/certs/cert-chain.pem", "Node Agent identity cert file")
-	flags.StringVar(&naConfig.KeyFile,
-		"key", "/etc/certs/key.pem", "Node identity private key file")
 	flags.StringVar(&naConfig.IstioCAAddress,
 		"ca-address", "istio-ca:8060", "Istio CA address")
-	flags.StringVar(&naConfig.RootCACertFile, "root-cert",
+	flags.StringVar(&naConfig.Env, "env", "onprem", "Node Environment : onprem | gcp | aws")
+	flags.StringVar(&naConfig.PlatformConfig.CertChainFile, "cert-chain",
+		"/etc/certs/cert-chain.pem", "Node Agent identity cert file")
+	flags.StringVar(&naConfig.PlatformConfig.KeyFile,
+		"key", "/etc/certs/key.pem", "Node identity private key file")
+	flags.StringVar(&naConfig.PlatformConfig.RootCACertFile, "root-cert",
 		"/etc/certs/root-cert.pem", "Root Certificate file")
-	flags.StringVar(&naConfig.Env, "env", "onprem", "Node Environment : onprem | gcp")
 
 	cmd.InitializeFlags(rootCmd)
 }
@@ -62,9 +62,15 @@ func main() {
 }
 
 func runNodeAgent() {
-	nodeAgent := na.NewNodeAgent(&naConfig)
+	nodeAgent, err := na.NewNodeAgent(&naConfig)
+	if err != nil {
+		glog.Error(err)
+		os.Exit(-1)
+	}
+
 	glog.Infof("Starting Node Agent")
 	if err := nodeAgent.Start(); err != nil {
 		glog.Errorf("Node agent terminated with error: %v.", err)
+		os.Exit(-1)
 	}
 }

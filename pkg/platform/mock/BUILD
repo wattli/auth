@@ -2,9 +2,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["token.go"],
+    srcs = [
+        "fakeclient.go",
+    ],
     visibility = ["//visibility:public"],
     deps = [
-         "@com_google_cloud_go//compute/metadata:go_default_library",
+        "//pkg/platform:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
     ],
 )

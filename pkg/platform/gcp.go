@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package na
+package platform
 
 import (
 	"fmt"
@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
 	cred "istio.io/auth/pkg/credential"
 )
 
@@ -44,16 +45,24 @@ func (j *jwtAccess) RequireTransportSecurity() bool {
 	return true
 }
 
-type gcpPlatformImpl struct {
+// GcpClientImpl is the implementation of GCP metadata client.
+type GcpClientImpl struct {
 	fetcher cred.TokenFetcher
 }
 
-func (na *gcpPlatformImpl) IsProperPlatform() bool {
+// NewGcpClientImpl creates a new GcpClientImpl.
+func NewGcpClientImpl(caAddr string) *GcpClientImpl {
+	return &GcpClientImpl{&cred.GcpTokenFetcher{Aud: fmt.Sprintf("grpc://%s", caAddr)}}
+}
+
+// IsProperPlatform returns whether the client is on GCE.
+func (ci *GcpClientImpl) IsProperPlatform() bool {
 	return metadata.OnGCE()
 }
 
-func (na *gcpPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error) {
-	jwtKey, err := na.fetcher.FetchToken()
+// GetDialOptions returns the GRPC dial options to connect to the CA.
+func (ci *GcpClientImpl) GetDialOptions(cfg *ClientConfig) ([]grpc.DialOption, error) {
+	jwtKey, err := ci.fetcher.FetchToken()
 	if err != nil {
 		glog.Errorf("Failed to get instance from GCE metadata %s, please make sure this binary is running on a GCE VM", err)
 		return nil, err
@@ -68,7 +77,24 @@ func (na *gcpPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error
 	return options, nil
 }
 
-func (na *gcpPlatformImpl) GetServiceIdentity() (string, error) {
+// GetServiceIdentity gets the identity of the GCE service.
+func (ci *GcpClientImpl) GetServiceIdentity() (string, error) {
 	// TODO(wattli): update this once we are ready for GCE
 	return "", nil
+}
+
+// GetAgentCredential returns the GCP JWT for the serivce account.
+func (ci *GcpClientImpl) GetAgentCredential() ([]byte, error) {
+	jwtKey, err := ci.fetcher.FetchToken()
+	if err != nil {
+		glog.Errorf("Failed to get instance from GCE metadata %s, please make sure this binary is running on a GCE VM", err)
+		return nil, err
+	}
+
+	return []byte(jwtKey), nil
+}
+
+// GetCredentialType returns the credential type as "gcp".
+func (ci *GcpClientImpl) GetCredentialType() string {
+	return "gcp"
 }

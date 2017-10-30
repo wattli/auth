@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package na
+package platform
 
 import (
 	"crypto/tls"
@@ -20,30 +20,42 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/golang/glog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"istio.io/auth/pkg/pki"
 )
 
-type onPremPlatformImpl struct {
+// OnPremClientImpl is the implementation of on premise metadata client.
+type OnPremClientImpl struct {
 	certFile string
 }
 
-func (na *onPremPlatformImpl) GetDialOptions(cfg *Config) ([]grpc.DialOption, error) {
-	transportCreds := getTLSCredentials(cfg.CertChainFile, cfg.KeyFile, cfg.RootCACertFile)
+// NewOnPremClientImpl creates a new OnPremClientImpl.
+func NewOnPremClientImpl(certChainFile string) *OnPremClientImpl {
+	return &OnPremClientImpl{certChainFile}
+}
+
+// GetDialOptions returns the GRPC dial options to connect to the CA.
+func (ci *OnPremClientImpl) GetDialOptions(cfg *ClientConfig) ([]grpc.DialOption, error) {
+	transportCreds, err := getTLSCredentials(cfg.CertChainFile, cfg.KeyFile, cfg.RootCACertFile)
+	if err != nil {
+		return nil, err
+	}
+
 	var options []grpc.DialOption
 	options = append(options, grpc.WithTransportCredentials(transportCreds))
 	return options, nil
 }
 
-func (na *onPremPlatformImpl) IsProperPlatform() bool {
+// IsProperPlatform returns whether the platform is on premise.
+func (ci *OnPremClientImpl) IsProperPlatform() bool {
 	return true
 }
 
-func (na *onPremPlatformImpl) GetServiceIdentity() (string, error) {
-	certBytes, err := ioutil.ReadFile(na.certFile)
+// GetServiceIdentity gets the service account from the cert SAN field.
+func (ci *OnPremClientImpl) GetServiceIdentity() (string, error) {
+	certBytes, err := ioutil.ReadFile(ci.certFile)
 	if err != nil {
 		return "", err
 	}
@@ -53,32 +65,46 @@ func (na *onPremPlatformImpl) GetServiceIdentity() (string, error) {
 	}
 	serviceIDs := pki.ExtractIDs(cert.Extensions)
 	if len(serviceIDs) != 1 {
-		return "", fmt.Errorf("Cert have %v SAN fields, should be 1", len(serviceIDs))
+		return "", fmt.Errorf("Cert has %v SAN fields, should be 1", len(serviceIDs))
 	}
 	return serviceIDs[0], nil
+}
+
+// GetAgentCredential passes the certificate to control plane to authenticate
+func (ci *OnPremClientImpl) GetAgentCredential() ([]byte, error) {
+	certBytes, err := ioutil.ReadFile(ci.certFile)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read cert file: %s", ci.certFile)
+	}
+	return certBytes, nil
+}
+
+// GetCredentialType returns "onprem".
+func (ci *OnPremClientImpl) GetCredentialType() string {
+	return "onprem"
 }
 
 // getTLSCredentials creates transport credentials that are common to
 // node agent and CA.
 func getTLSCredentials(certificateFile string, keyFile string,
-	caCertFile string) credentials.TransportCredentials {
+	caCertFile string) (credentials.TransportCredentials, error) {
 
 	// Load the certificate from disk
 	certificate, err := tls.LoadX509KeyPair(certificateFile, keyFile)
 	if err != nil {
-		glog.Fatalf("Cannot load key pair: %s", err)
+		return nil, fmt.Errorf("Cannot load key pair: %s", err)
 	}
 
 	// Create a certificate pool
 	certPool := x509.NewCertPool()
 	bs, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		glog.Fatalf("Failed to read CA cert: %s", err)
+		return nil, fmt.Errorf("Failed to read CA cert: %s", err)
 	}
 
 	ok := certPool.AppendCertsFromPEM(bs)
 	if !ok {
-		glog.Fatalf("Failed to append certificates")
+		return nil, fmt.Errorf("Failed to append certificates")
 	}
 
 	config := tls.Config{
@@ -86,5 +112,5 @@ func getTLSCredentials(certificateFile string, keyFile string,
 	}
 	config.RootCAs = certPool
 
-	return credentials.NewTLS(&config)
+	return credentials.NewTLS(&config), nil
 }
