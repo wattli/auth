@@ -4,7 +4,7 @@ Istio Security SIG and sub workgroups:
 
 *   Istio Security SIG
     *   Leads: Wencheng Lu (Google), Etai Lev-Ran (IBM)
-    *   Scopes: General Istio security topics across all sub workgroups, like go over Istio 0.3 security tasks. Topics not covered by each sub workgroups, like ingress/egress, security threat model, etc. Topics cross other groups like networking, environment, integration, etc. each sub workgroup will recap their work
+    *   Scopes: General Istio security topics across all sub workgroups, like go over Istio 0.3 security tasks. Topics not covered by each sub workgroups, like ingress/egress, security threat model, etc. Topics cross other groups like networking, environment, integration, etc. each sub workgroup will recap their work.
 
 *   Sub Workgroup: Workload Identity
     *   Leads: Tao Li (Google), Etai Lev-Ran (IBM)
